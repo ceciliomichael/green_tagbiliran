@@ -7,4 +7,6 @@ class AppRoutes {
   static const String reportIssue = '/report-issue';
   static const String issueStatus = '/issue-status';
   static const String schedule = '/schedule';
+  static const String events = '/events';
+  static const String notifications = '/notifications';
 }
