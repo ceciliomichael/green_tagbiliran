@@ -1,0 +1,29 @@
+name: green_tabiliran
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_svg: ^2.2.0
+  image_picker: ^1.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/svgs/recycle.svg
+    - assets/images/onboarding/
+    - assets/images/tiles/guide.png
+    - assets/images/tiles/events.png
+    - assets/images/tiles/location.png
+    - assets/images/tiles/report_issue.png
+    - assets/images/tiles/schedule.png
