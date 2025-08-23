@@ -11,7 +11,6 @@ class RecycleScreen extends StatefulWidget {
 class _RecycleScreenState extends State<RecycleScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  int _currentStep = 0;
 
   final List<WasteCategory> wasteCategories = [
     WasteCategory(
@@ -262,7 +261,7 @@ class _RecycleScreenState extends State<RecycleScreen>
         color: AppColors.pureWhite,
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowDark.withOpacity(0.1),
+            color: AppColors.shadowDark.withValues(alpha: 0.1),
             offset: const Offset(0, 2),
             blurRadius: 8,
           ),
@@ -280,7 +279,7 @@ class _RecycleScreenState extends State<RecycleScreen>
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.shadowDark.withOpacity(0.15),
+                      color: AppColors.shadowDark.withValues(alpha: 0.15),
                       offset: const Offset(4, 4),
                       blurRadius: 8,
                     ),
@@ -382,7 +381,7 @@ class _RecycleScreenState extends State<RecycleScreen>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowDark.withOpacity(0.15),
+            color: AppColors.shadowDark.withValues(alpha: 0.15),
             offset: const Offset(6, 6),
             blurRadius: 12,
           ),
@@ -398,7 +397,7 @@ class _RecycleScreenState extends State<RecycleScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: category.color.withOpacity(0.1),
+              color: category.color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(category.icon, color: category.color, size: 32),
@@ -450,7 +449,7 @@ class _RecycleScreenState extends State<RecycleScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowDark.withOpacity(0.1),
+            color: AppColors.shadowDark.withValues(alpha: 0.1),
             offset: const Offset(4, 4),
             blurRadius: 8,
           ),
@@ -524,9 +523,9 @@ class _RecycleScreenState extends State<RecycleScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: categoryColor.withOpacity(0.1),
+        color: categoryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: categoryColor.withOpacity(0.3), width: 1),
+        border: Border.all(color: categoryColor.withValues(alpha: 0.3), width: 1),
       ),
       child: Text(
         example,

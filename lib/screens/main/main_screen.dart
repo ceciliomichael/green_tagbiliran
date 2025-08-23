@@ -15,8 +15,14 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
+  List<Widget> get _screens => [
+    HomeScreen(
+      onLocationTap: () {
+        setState(() {
+          _currentIndex = 1; // Switch to track tab
+        });
+      },
+    ),
     const TrackScreen(),
     const RecycleScreen(),
     const ProfileScreen(),

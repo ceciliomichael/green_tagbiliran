@@ -9,6 +9,7 @@ import 'screens/report/issue_status_screen.dart';
 import 'screens/schedule/schedule_screen.dart';
 import 'screens/events/events_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
+import 'screens/track/track_screen.dart';
 import 'constants/routes.dart';
 import 'constants/colors.dart';
 
@@ -44,6 +45,7 @@ class MainApp extends StatelessWidget {
         AppRoutes.schedule: (context) => const ScheduleScreen(),
         AppRoutes.events: (context) => const EventsScreen(),
         AppRoutes.notifications: (context) => const NotificationsScreen(),
+        AppRoutes.track: (context) => const TrackScreen(),
       },
     );
   }

@@ -4,7 +4,9 @@ import '../../constants/home_data.dart';
 import '../../constants/routes.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback? onLocationTap;
+  
+  const HomeScreen({super.key, this.onLocationTap});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -353,6 +355,9 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.pushNamed(context, AppRoutes.schedule);
             } else if (feature.title == 'Events & Reminders') {
               Navigator.pushNamed(context, AppRoutes.events);
+            } else if (feature.title == 'Location') {
+              // Switch to track tab in bottom navigation
+              widget.onLocationTap?.call();
             }
           },
           child: Padding(

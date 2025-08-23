@@ -9,4 +9,5 @@ class AppRoutes {
   static const String schedule = '/schedule';
   static const String events = '/events';
   static const String notifications = '/notifications';
+  static const String track = '/track';
 }
