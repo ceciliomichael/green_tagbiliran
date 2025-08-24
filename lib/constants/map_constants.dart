@@ -1,8 +1,8 @@
 import 'package:latlong2/latlong.dart';
 
 class MapConstants {
-  // Tagbiliran City center coordinates
-  static const LatLng tagbiliranCenter = LatLng(9.647, 123.854);
+  // Tagbilaran City center coordinates
+  static const LatLng tagbilaranCenter = LatLng(9.647, 123.854);
 
   // Initial map zoom level
   static const double initialZoom = 14.0;
@@ -13,7 +13,7 @@ class MapConstants {
   static const String osmTileUrl =
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-  // Sample garbage collection route points around Tagbiliran
+  // Sample garbage collection route points around Tagbilaran
   static final List<LatLng> garbageCollectionRoute = [
     const LatLng(9.640, 123.850), // Starting point near port area
     const LatLng(9.642, 123.852), // City center direction

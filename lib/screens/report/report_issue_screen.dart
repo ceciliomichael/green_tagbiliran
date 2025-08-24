@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../constants/colors.dart';
 import '../../constants/routes.dart';
+import '../../services/auth_service.dart';
+import '../../services/reports_service.dart';
 
 class ReportIssueScreen extends StatefulWidget {
   const ReportIssueScreen({super.key});
@@ -17,10 +19,13 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _issueController = TextEditingController();
+  final _authService = AuthService();
+  final _reportsService = ReportsService();
 
-  String _selectedBarangay = 'Poblacion I';
+  String _selectedBarangay = '';
   XFile? _selectedImage;
   final ImagePicker _picker = ImagePicker();
+  bool _isSubmitting = false;
 
   final List<String> _barangays = [
     'Bool',
@@ -39,6 +44,25 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     'Tiptip',
     'Ubujan',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeUserData();
+  }
+
+  void _initializeUserData() {
+    final currentUser = _authService.currentUser;
+    if (currentUser != null) {
+      // Pre-fill user data
+      _fullNameController.text = currentUser.fullName;
+      _phoneController.text = currentUser.phone.replaceFirst('+63', '');
+      _selectedBarangay = currentUser.barangay;
+    } else {
+      // Fallback if no user data available
+      _selectedBarangay = 'Poblacion I';
+    }
+  }
 
   @override
   void dispose() {
@@ -107,7 +131,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
 
               // Title
               const Text(
-                'Select Your Barangay',
+                'Select Barangay',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -118,7 +142,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               const SizedBox(height: 8),
 
               const Text(
-                'Tagbiliran City, Bohol',
+                'Choose the barangay where the issue is located',
                 style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
               ),
 
@@ -187,18 +211,79 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     );
   }
 
-  void _submitReport() {
-    if (_formKey.currentState!.validate()) {
-      // TODO: Implement actual report submission logic
+  Future<void> _submitReport() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final currentUser = _authService.currentUser;
+    if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Report submitted successfully!'),
-          backgroundColor: AppColors.success,
+          content: Text('Please login to submit a report'),
+          backgroundColor: AppColors.error,
         ),
       );
+      return;
+    }
 
-      // Navigate to status screen
-      Navigator.pushNamed(context, AppRoutes.issueStatus);
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final result = await _reportsService.submitReport(
+        user: currentUser,
+        fullName: _fullNameController.text.trim(),
+        phone: '+63${_phoneController.text.trim()}',
+        barangay: _selectedBarangay,
+        issueDescription: _issueController.text.trim(),
+        image: _selectedImage,
+      );
+
+      if (result.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message ?? 'Report submitted successfully!'),
+              backgroundColor: AppColors.primaryGreen,
+            ),
+          );
+
+          // Clear form
+          _fullNameController.clear();
+          _phoneController.clear();
+          _issueController.clear();
+          setState(() {
+            _selectedImage = null;
+          });
+
+          // Navigate to status screen
+          Navigator.pushNamed(context, AppRoutes.issueStatus);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Failed to submit report'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -322,13 +407,41 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Barangay',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    Row(
+                      children: [
+                        const Text(
+                          'Barangay',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (_selectedBarangay ==
+                            _authService.currentUser?.barangay) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryGreen.withValues(
+                                alpha: 0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'Your Area',
+                              style: TextStyle(
+                                color: AppColors.primaryGreen,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -561,7 +674,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _submitReport,
+                  onPressed: _isSubmitting ? null : _submitReport,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     foregroundColor: Colors.white,
@@ -570,10 +683,35 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
-                    'Submit Report',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
+                  child: _isSubmitting
+                      ? const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              'Submitting...',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        )
+                      : const Text(
+                          'Submit Report',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
 

@@ -4,12 +4,8 @@ import '../../constants/colors.dart';
 class TruckMarker extends StatelessWidget {
   final double size;
   final bool isAnimated;
-  
-  const TruckMarker({
-    super.key,
-    this.size = 40.0,
-    this.isAnimated = true,
-  });
+
+  const TruckMarker({super.key, this.size = 40.0, this.isAnimated = true});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +40,7 @@ class TruckMarker extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryGreen.withOpacity(0.3),
+                color: AppColors.primaryGreen.withValues(alpha: 0.3),
                 blurRadius: 8,
                 spreadRadius: 2,
               ),

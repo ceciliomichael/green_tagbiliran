@@ -45,7 +45,7 @@ class _TrackScreenState extends State<TrackScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Tagbiliran City, Bohol',
+                        'Tagbilaran City, Bohol',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -159,9 +159,10 @@ class _TrackScreenState extends State<TrackScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.pureWhite,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
             // Green header
             _buildHeader(),
 
@@ -192,7 +193,8 @@ class _TrackScreenState extends State<TrackScreen> {
                 ],
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

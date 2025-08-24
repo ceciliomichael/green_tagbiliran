@@ -5,11 +5,8 @@ import '../../services/track_service.dart';
 
 class TrackInfoCard extends StatefulWidget {
   final TrackService trackService;
-  
-  const TrackInfoCard({
-    super.key,
-    required this.trackService,
-  });
+
+  const TrackInfoCard({super.key, required this.trackService});
 
   @override
   State<TrackInfoCard> createState() => _TrackInfoCardState();
@@ -22,7 +19,7 @@ class _TrackInfoCardState extends State<TrackInfoCard> {
   void initState() {
     super.initState();
     _updateEstimatedArrival();
-    
+
     // Update estimated arrival time when truck position changes
     widget.trackService.truckPositionStream.listen((_) {
       _updateEstimatedArrival();
@@ -33,7 +30,7 @@ class _TrackInfoCardState extends State<TrackInfoCard> {
     // Simulate user location (could be from GPS)
     const userLocation = LatLng(9.648, 123.856);
     final eta = widget.trackService.getEstimatedArrivalTime(userLocation);
-    
+
     if (mounted) {
       setState(() {
         _estimatedArrival = eta;
@@ -44,7 +41,7 @@ class _TrackInfoCardState extends State<TrackInfoCard> {
   String _formatDuration(Duration duration) {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
-    
+
     if (hours > 0) {
       return '${hours}h ${minutes}m';
     } else {
@@ -87,7 +84,7 @@ class _TrackInfoCardState extends State<TrackInfoCard> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryGreen.withOpacity(0.4),
+                      color: AppColors.primaryGreen.withValues(alpha: 0.4),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),
@@ -145,7 +142,8 @@ class _TrackInfoCardState extends State<TrackInfoCard> {
                     stream: widget.trackService.truckPositionStream,
                     initialData: widget.trackService.currentPosition,
                     builder: (context, snapshot) {
-                      final position = snapshot.data ?? widget.trackService.currentPosition;
+                      final position =
+                          snapshot.data ?? widget.trackService.currentPosition;
                       return Text(
                         '${position.latitude.toStringAsFixed(3)}, ${position.longitude.toStringAsFixed(3)}',
                         style: const TextStyle(

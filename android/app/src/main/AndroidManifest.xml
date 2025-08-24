@@ -1,6 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for network requests to Supabase backend -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Required for checking network connectivity -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    
     <application
-        android:label="green_tabiliran"
+        android:label="Green Tagbilaran"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

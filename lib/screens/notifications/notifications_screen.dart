@@ -280,8 +280,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surfaceWhite,
-      body: Column(
-        children: [
+      body: SafeArea(
+        child: Column(
+          children: [
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
@@ -297,6 +298,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

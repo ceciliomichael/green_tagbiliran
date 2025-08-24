@@ -16,7 +16,7 @@ class MapWidget extends StatefulWidget {
 class _MapWidgetState extends State<MapWidget> {
   final MapController _mapController = MapController();
   final TrackService _trackService = TrackService();
-  
+
   LatLng _currentTruckPosition = MapConstants.currentTruckPosition;
   List<LatLng> _completedRoute = [];
   List<LatLng> _remainingRoute = MapConstants.garbageCollectionRoute;
@@ -83,7 +83,7 @@ class _MapWidgetState extends State<MapWidget> {
         child: FlutterMap(
           mapController: _mapController,
           options: MapOptions(
-            initialCenter: MapConstants.tagbiliranCenter,
+            initialCenter: MapConstants.tagbilaranCenter,
             initialZoom: MapConstants.initialZoom,
             minZoom: MapConstants.minZoom,
             maxZoom: MapConstants.maxZoom,
@@ -98,7 +98,7 @@ class _MapWidgetState extends State<MapWidget> {
               userAgentPackageName: 'com.example.green_tabiliran',
               maxNativeZoom: 19,
             ),
-            
+
             // Completed route polyline (green)
             if (_completedRoute.isNotEmpty)
               PolylineLayer(
@@ -111,7 +111,7 @@ class _MapWidgetState extends State<MapWidget> {
                   ),
                 ],
               ),
-            
+
             // Remaining route polyline (gray)
             if (_remainingRoute.isNotEmpty)
               PolylineLayer(
@@ -124,61 +124,67 @@ class _MapWidgetState extends State<MapWidget> {
                   ),
                 ],
               ),
-            
+
             // Full planned route polyline (main route)
             PolylineLayer(
               polylines: [
-                                 Polyline(
-                   points: MapConstants.garbageCollectionRoute,
-                   color: Color(MapConstants.routeColorValue).withOpacity(0.6),
-                   strokeWidth: 2.0,
-                   pattern: StrokePattern.dashed(segments: const [5, 5]),
-                 ),
+                Polyline(
+                  points: MapConstants.garbageCollectionRoute,
+                  color: Color(
+                    MapConstants.routeColorValue,
+                  ).withValues(alpha: 0.6),
+                  strokeWidth: 2.0,
+                  pattern: StrokePattern.dashed(segments: const [5, 5]),
+                ),
               ],
             ),
-            
+
             // Route markers (collection points)
             MarkerLayer(
               markers: MapConstants.garbageCollectionRoute
                   .asMap()
                   .entries
-                  .map((entry) => Marker(
-                        width: 20.0,
-                        height: 20.0,
-                        point: entry.value,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: _completedRoute.contains(entry.value)
-                                ? Color(MapConstants.completedRouteColorValue)
-                                : Color(MapConstants.pendingRouteColorValue),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.pureWhite,
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowDark.withOpacity(0.5),
-                                blurRadius: 4,
-                                offset: const Offset(2, 2),
-                              ),
-                            ],
+                  .map(
+                    (entry) => Marker(
+                      width: 20.0,
+                      height: 20.0,
+                      point: entry.value,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: _completedRoute.contains(entry.value)
+                              ? Color(MapConstants.completedRouteColorValue)
+                              : Color(MapConstants.pendingRouteColorValue),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.pureWhite,
+                            width: 2,
                           ),
-                          child: Center(
-                            child: Text(
-                              '${entry.key + 1}',
-                              style: const TextStyle(
-                                color: AppColors.pureWhite,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.shadowDark.withValues(
+                                alpha: 0.5,
                               ),
+                              blurRadius: 4,
+                              offset: const Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${entry.key + 1}',
+                            style: const TextStyle(
+                              color: AppColors.pureWhite,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                      ))
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
-            
+
             // Truck marker
             MarkerLayer(
               markers: [

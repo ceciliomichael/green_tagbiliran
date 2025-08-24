@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../constants/colors.dart';
 import '../../constants/routes.dart';
+import '../../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -17,8 +18,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
 
   String? _selectedBarangay;
+  bool _isLoading = false;
 
   final List<String> _barangays = [
     'Bool',
@@ -46,6 +49,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleRegistration() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    // Additional validation for barangay
+    if (_selectedBarangay == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select your barangay'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Format phone number to include +63 prefix
+      final phoneNumber = '+63${_phoneController.text.trim()}';
+
+      final result = await _authService.registerUser(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        phone: phoneNumber,
+        password: _passwordController.text,
+        barangay: _selectedBarangay!,
+      );
+
+      if (result.success) {
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message ?? 'Registration successful!'),
+              backgroundColor: AppColors.primaryGreen,
+            ),
+          );
+        }
+
+        // Navigate to onboarding screen
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+        }
+      } else {
+        // Show error message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Registration failed'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _showBarangaySelector() {
@@ -91,7 +168,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 8),
 
               const Text(
-                'Tagbiliran City, Bohol',
+                'Tagbilaran City, Bohol',
                 style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
               ),
 
@@ -380,7 +457,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Barangay (Tagbiliran City)',
+                      'Barangay (Tagbilaran City)',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 16,
@@ -610,31 +687,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 const SizedBox(height: 8),
 
                                 _buildButton(
-                                  text: 'Create Account',
-                                  onPressed: () {
-                                    if (_formKey.currentState!.validate()) {
-                                      // Additional validation for barangay
-                                      if (_selectedBarangay == null) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Please select your barangay',
-                                            ),
-                                            backgroundColor: AppColors.error,
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      // Navigate to onboarding after successful registration
-                                      Navigator.pushReplacementNamed(
-                                        context,
-                                        AppRoutes.onboarding,
-                                      );
-                                    }
-                                  },
+                                  text: _isLoading
+                                      ? 'Creating Account...'
+                                      : 'Create Account',
+                                  onPressed: _isLoading
+                                      ? () {}
+                                      : _handleRegistration,
                                 ),
                               ],
                             ),

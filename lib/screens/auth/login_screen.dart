@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../constants/colors.dart';
 import '../../constants/routes.dart';
+import '../../services/auth_service.dart';
+import '../../models/user.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,12 +16,86 @@ class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
+
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Format phone number to include +63 prefix
+      final phoneNumber = '+63${_phoneController.text.trim()}';
+
+      final result = await _authService.loginUser(
+        phone: phoneNumber,
+        password: _passwordController.text,
+      );
+
+      if (result.success && result.user != null) {
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Welcome back, ${result.user!.firstName}!'),
+              backgroundColor: AppColors.primaryGreen,
+            ),
+          );
+        }
+
+        // Navigate based on user role
+        if (mounted) {
+          final user = result.user!;
+          switch (user.userRole) {
+            case UserRole.admin:
+              Navigator.pushReplacementNamed(context, AppRoutes.adminMain);
+              break;
+            case UserRole.truckDriver:
+              Navigator.pushReplacementNamed(context, AppRoutes.truckDriverMain);
+              break;
+            case UserRole.user:
+              Navigator.pushReplacementNamed(context, AppRoutes.main);
+              break;
+          }
+        }
+      } else {
+        // Show error message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Login failed'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Widget _buildNeumorphicContainer({
@@ -322,16 +398,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 const SizedBox(height: 8),
 
                                 _buildButton(
-                                  text: 'Sign In',
-                                  onPressed: () {
-                                    if (_formKey.currentState!.validate()) {
-                                      // Navigate to main screen after successful login
-                                      Navigator.pushReplacementNamed(
-                                        context,
-                                        AppRoutes.main,
-                                      );
-                                    }
-                                  },
+                                  text: _isLoading
+                                      ? 'Signing In...'
+                                      : 'Sign In',
+                                  onPressed: _isLoading ? () {} : _handleLogin,
                                 ),
                               ],
                             ),
@@ -365,6 +435,178 @@ class _LoginScreenState extends State<LoginScreen> {
                                 },
                               ),
                             ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Admin access button
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceWhite,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.primaryGreen.withValues(
+                                  alpha: 0.2,
+                                ),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.shadowDark.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  offset: const Offset(0, 4),
+                                  blurRadius: 12,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                const Icon(
+                                  Icons.admin_panel_settings_outlined,
+                                  color: AppColors.primaryGreen,
+                                  size: 32,
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Admin Access',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Access administrative controls and management features',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pushReplacementNamed(
+                                        context,
+                                        AppRoutes.adminMain,
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primaryGreen,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Enter Admin Panel',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Truck Driver access button
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceWhite,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.primaryGreen.withValues(
+                                  alpha: 0.2,
+                                ),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.shadowDark.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  offset: const Offset(0, 4),
+                                  blurRadius: 12,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                const Icon(
+                                  Icons.local_shipping_outlined,
+                                  color: AppColors.primaryGreen,
+                                  size: 32,
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Truck Driver Access',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Access route management and collection tracking',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pushReplacementNamed(
+                                        context,
+                                        AppRoutes.truckDriverMain,
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primaryGreen,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Enter Driver Dashboard',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
 

@@ -167,8 +167,9 @@ class _EventsScreenState extends State<EventsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surfaceWhite,
-      body: Column(
-        children: [
+      body: SafeArea(
+        child: Column(
+          children: [
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
@@ -182,6 +183,7 @@ class _EventsScreenState extends State<EventsScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
