@@ -23,9 +23,11 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   final _reportsService = ReportsService();
 
   String _selectedBarangay = '';
-  XFile? _selectedImage;
+  // ignore: prefer_final_fields
+  List<XFile> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
   bool _isSubmitting = false;
+  static const int maxImages = 3;
 
   final List<String> _barangays = [
     'Bool',
@@ -73,6 +75,16 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   }
 
   Future<void> _pickImage() async {
+    if (_selectedImages.length >= maxImages) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Maximum $maxImages photos allowed'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     try {
       final XFile? image = await _picker.pickImage(
         source: kIsWeb ? ImageSource.gallery : ImageSource.camera,
@@ -81,7 +93,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
 
       if (image != null) {
         setState(() {
-          _selectedImage = image;
+          _selectedImages.add(image);
         });
       }
     } catch (e) {
@@ -93,9 +105,9 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     }
   }
 
-  void _removeImage() {
+  void _removeImage(int index) {
     setState(() {
-      _selectedImage = null;
+      _selectedImages.removeAt(index);
     });
   }
 
@@ -236,7 +248,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         phone: '+63${_phoneController.text.trim()}',
         barangay: _selectedBarangay,
         issueDescription: _issueController.text.trim(),
-        image: _selectedImage,
+        images: _selectedImages.isNotEmpty ? _selectedImages : null,
       );
 
       if (result.success) {
@@ -253,7 +265,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
           _phoneController.clear();
           _issueController.clear();
           setState(() {
-            _selectedImage = null;
+            _selectedImages.clear();
           });
 
           // Navigate to status screen
@@ -494,17 +506,31 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Attach Image',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Attach Photos',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  '${_selectedImages.length}/$maxImages',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
 
-            if (_selectedImage == null) ...[
+            // Add photo button (always visible if under limit)
+            if (_selectedImages.length < maxImages) ...[
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
@@ -529,9 +555,10 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: AppColors.primaryGreen.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
@@ -540,137 +567,182 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                           kIsWeb
                               ? Icons.photo_library_outlined
                               : Icons.camera_alt_outlined,
-                          size: 32,
+                          size: 28,
                           color: AppColors.primaryGreen,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       Text(
                         kIsWeb
-                            ? 'Tap to select an image'
+                            ? 'Tap to select a photo'
                             : 'Tap to take a photo',
                         style: const TextStyle(
                           color: AppColors.textPrimary,
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Optional: Add a photo to help us understand the issue',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.textSecondary.withValues(alpha: 0.8),
-                          fontSize: 12,
+                      const SizedBox(height: 2),
+                      Flexible(
+                        child: Text(
+                          'Optional: Add up to $maxImages photos',
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.textSecondary.withValues(
+                              alpha: 0.8,
+                            ),
+                            fontSize: 11,
+                            height: 1.2,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-            ] else ...[
-              Stack(
-                children: [
-                  Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: AppColors.surfaceWhite,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.shadowDark.withValues(alpha: 0.1),
-                          offset: const Offset(0, 2),
-                          blurRadius: 8,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: kIsWeb
-                          ? Image.network(
-                              _selectedImage!.path,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: AppColors.surfaceWhite,
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.error_outline,
-                                      color: AppColors.error,
-                                      size: 48,
-                                    ),
-                                  ),
-                                );
-                              },
-                            )
-                          : FutureBuilder<Uint8List>(
-                              future: _selectedImage!.readAsBytes(),
-                              builder: (context, snapshot) {
-                                if (snapshot.hasData) {
-                                  return Image.memory(
-                                    snapshot.data!,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                  );
-                                } else if (snapshot.hasError) {
-                                  return Container(
-                                    color: AppColors.surfaceWhite,
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.error_outline,
-                                        color: AppColors.error,
-                                        size: 48,
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  return Container(
-                                    color: AppColors.surfaceWhite,
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.primaryGreen,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: GestureDetector(
-                      onTap: _removeImage,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
+              const SizedBox(height: 16),
+            ],
+
+            // Display selected images
+            if (_selectedImages.isNotEmpty) ...[
+              ...List.generate(_selectedImages.length, (index) {
+                final image = _selectedImages[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Stack(
+                    children: [
+                      Container(
+                        height: 200,
+                        width: double.infinity,
                         decoration: BoxDecoration(
-                          color: AppColors.error,
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.surfaceWhite,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.error.withValues(alpha: 0.3),
+                              color: AppColors.shadowDark.withValues(
+                                alpha: 0.1,
+                              ),
                               offset: const Offset(0, 2),
-                              blurRadius: 4,
+                              blurRadius: 8,
                               spreadRadius: 1,
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 20,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: kIsWeb
+                              ? Image.network(
+                                  image.path,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: AppColors.surfaceWhite,
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.error_outline,
+                                          color: AppColors.error,
+                                          size: 48,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : FutureBuilder<Uint8List>(
+                                  future: image.readAsBytes(),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasData) {
+                                      return Image.memory(
+                                        snapshot.data!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      );
+                                    } else if (snapshot.hasError) {
+                                      return Container(
+                                        color: AppColors.surfaceWhite,
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.error_outline,
+                                            color: AppColors.error,
+                                            size: 48,
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      return Container(
+                                        color: AppColors.surfaceWhite,
+                                        child: const Center(
+                                          child: CircularProgressIndicator(
+                                            color: AppColors.primaryGreen,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
                         ),
                       ),
-                    ),
+                      // Remove button
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.error.withValues(alpha: 0.3),
+                                  offset: const Offset(0, 2),
+                                  blurRadius: 4,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Image counter badge
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryGreen.withValues(
+                              alpha: 0.9,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${index + 1}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              }),
             ],
           ],
         ),

@@ -148,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '$_userBarangay Barangay',
+                        'Barangay $_userBarangay',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,

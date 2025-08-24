@@ -31,26 +31,32 @@ class ReportsService {
   factory ReportsService() => _instance;
   ReportsService._internal();
 
-  // Submit a report with optional image
+  // Submit a report with optional images (up to 3)
   Future<ReportsResult> submitReport({
     required User user,
     required String fullName,
     required String phone,
     required String barangay,
     required String issueDescription,
-    XFile? image,
+    List<XFile>? images,
   }) async {
     try {
-      String? imageData;
-      String? imageType;
-      int? fileSize;
+      List<Map<String, dynamic>> imageDataList = [];
 
-      // Convert image to base64 if provided
-      if (image != null) {
-        final bytes = await image.readAsBytes();
-        imageData = base64Encode(bytes);
-        imageType = _getImageType(image.path);
-        fileSize = bytes.length;
+      // Convert images to base64 if provided
+      if (images != null && images.isNotEmpty) {
+        for (final image in images) {
+          final bytes = await image.readAsBytes();
+          final imageData = base64Encode(bytes);
+          final imageType = _getImageType(image.path);
+          final fileSize = bytes.length;
+
+          imageDataList.add({
+            'image_data': imageData,
+            'image_type': imageType,
+            'file_size': fileSize,
+          });
+        }
       }
 
       // Prepare request body
@@ -60,9 +66,7 @@ class ReportsService {
         'p_phone': phone,
         'p_barangay': barangay,
         'p_issue_description': issueDescription,
-        if (imageData != null) 'p_image_data': imageData,
-        if (imageType != null) 'p_image_type': imageType,
-        if (fileSize != null) 'p_file_size': fileSize,
+        if (imageDataList.isNotEmpty) 'p_images': imageDataList,
       };
 
       // Make HTTP request
