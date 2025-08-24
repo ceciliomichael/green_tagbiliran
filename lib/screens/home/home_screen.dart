@@ -24,6 +24,79 @@ class _HomeScreenState extends State<HomeScreen> {
     return _authService.currentUser?.fullName ?? 'User';
   }
 
+  ScheduleItem? get _nextSchedule {
+    // Find the schedule for the user's barangay
+    final userBarangay = _userBarangay;
+    try {
+      return HomeConstants.garbageCollectionSchedule.firstWhere(
+        (schedule) => schedule.barangay.toLowerCase().contains(
+          userBarangay.toLowerCase(),
+        ),
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  String _getNextCollectionDay() {
+    final schedule = _nextSchedule;
+    if (schedule == null) return 'No schedule available';
+
+    final now = DateTime.now();
+    final currentDay = now.weekday; // 1 = Monday, 7 = Sunday
+
+    // Parse collection days
+    final dayString = schedule.day.toLowerCase();
+    List<int> collectionDays = [];
+
+    if (dayString.contains('monday')) collectionDays.add(1);
+    if (dayString.contains('tuesday')) collectionDays.add(2);
+    if (dayString.contains('wednesday')) collectionDays.add(3);
+    if (dayString.contains('thursday')) collectionDays.add(4);
+    if (dayString.contains('friday')) collectionDays.add(5);
+    if (dayString.contains('saturday')) collectionDays.add(6);
+    if (dayString.contains('sunday')) collectionDays.add(7);
+
+    if (collectionDays.isEmpty) return 'No schedule available';
+
+    // Find next collection day
+    int? nextDay;
+    int daysUntil = 8; // Max days to check
+
+    for (int day in collectionDays) {
+      int diff = day - currentDay;
+      if (diff <= 0) diff += 7; // Next week if today or past
+
+      if (diff < daysUntil) {
+        daysUntil = diff;
+        nextDay = day;
+      }
+    }
+
+    if (nextDay == null) return 'No schedule available';
+
+    // Format the result
+    final dayNames = [
+      '',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    final nextDate = now.add(Duration(days: daysUntil));
+
+    if (daysUntil == 1) {
+      return 'Tomorrow (${dayNames[nextDay]})';
+    } else if (daysUntil < 7) {
+      return '${dayNames[nextDay]} (${daysUntil} days)';
+    } else {
+      return 'Next ${dayNames[nextDay]}';
+    }
+  }
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -168,6 +241,92 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icons.verified_user_outlined,
                     color: Colors.white,
                     size: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Next Collection Schedule
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    _nextSchedule?.time.contains('AM') == true
+                        ? Icons.wb_sunny_outlined
+                        : Icons.nightlight_outlined,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Next Collection',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getNextCollectionDay(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (_nextSchedule != null) ...[
+                        const SizedBox(height: 1),
+                        Text(
+                          _nextSchedule!.time,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.schedule);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.white,
+                      size: 12,
+                    ),
                   ),
                 ),
               ],
