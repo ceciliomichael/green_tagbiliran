@@ -511,30 +511,57 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                   height: 120,
                   width: double.infinity,
                   decoration: BoxDecoration(
+                    color: AppColors.surfaceWhite,
                     border: Border.all(
-                      color: AppColors.textSecondary.withValues(alpha: 0.3),
+                      color: AppColors.textSecondary.withValues(alpha: 0.4),
+                      width: 2,
                       style: BorderStyle.solid,
                     ),
                     borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.shadowDark.withValues(alpha: 0.08),
+                        offset: const Offset(0, 2),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        kIsWeb
-                            ? Icons.photo_library_outlined
-                            : Icons.camera_alt_outlined,
-                        size: 48,
-                        color: AppColors.textSecondary,
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          kIsWeb
+                              ? Icons.photo_library_outlined
+                              : Icons.camera_alt_outlined,
+                          size: 32,
+                          color: AppColors.primaryGreen,
+                        ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Text(
                         kIsWeb
                             ? 'Tap to select an image'
                             : 'Tap to take a photo',
                         style: const TextStyle(
-                          color: AppColors.textSecondary,
+                          color: AppColors.textPrimary,
                           fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Optional: Add a photo to help us understand the issue',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textSecondary.withValues(alpha: 0.8),
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -549,14 +576,70 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                     width: double.infinity,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      image: DecorationImage(
-                        image: kIsWeb
-                            ? NetworkImage(_selectedImage!.path)
-                            : NetworkImage(
-                                _selectedImage!.path,
-                              ), // For web, XFile.path gives blob URL
-                        fit: BoxFit.cover,
-                      ),
+                      color: AppColors.surfaceWhite,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.shadowDark.withValues(alpha: 0.1),
+                          offset: const Offset(0, 2),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: kIsWeb
+                          ? Image.network(
+                              _selectedImage!.path,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: AppColors.surfaceWhite,
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.error_outline,
+                                      color: AppColors.error,
+                                      size: 48,
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : FutureBuilder<Uint8List>(
+                              future: _selectedImage!.readAsBytes(),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  return Image.memory(
+                                    snapshot.data!,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  );
+                                } else if (snapshot.hasError) {
+                                  return Container(
+                                    color: AppColors.surfaceWhite,
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.error_outline,
+                                        color: AppColors.error,
+                                        size: 48,
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  return Container(
+                                    color: AppColors.surfaceWhite,
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.primaryGreen,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
                     ),
                   ),
                   Positioned(
@@ -566,9 +649,17 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                       onTap: _removeImage,
                       child: Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: AppColors.error,
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.error.withValues(alpha: 0.3),
+                              offset: const Offset(0, 2),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            ),
+                          ],
                         ),
                         child: const Icon(
                           Icons.close,

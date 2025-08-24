@@ -92,9 +92,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
         }
 
-        // Navigate to onboarding screen
-        if (mounted) {
+        // Automatically log in the user after successful registration
+        final loginResult = await _authService.loginUser(
+          phone: phoneNumber,
+          password: _passwordController.text,
+        );
+
+        if (loginResult.success && mounted) {
+          // Navigate to onboarding screen with user logged in
           Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+        } else {
+          // If auto-login fails, still navigate to onboarding but show a message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Registration successful! Please login to continue.'),
+                backgroundColor: AppColors.primaryGreen,
+              ),
+            );
+            Navigator.pushReplacementNamed(context, AppRoutes.login);
+          }
         }
       } else {
         // Show error message

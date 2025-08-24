@@ -176,6 +176,28 @@ class AuthService {
   // Check if user is logged in
   bool get isLoggedIn => _currentUser != null;
 
+  // Refresh current user profile data
+  Future<AuthResult> refreshCurrentUser() async {
+    if (_currentUser == null) {
+      return AuthResult(success: false, error: 'No user logged in');
+    }
+
+    try {
+      final result = await getUserProfile(_currentUser!.id);
+      if (result.success && result.user != null) {
+        _currentUser = result.user;
+        await _storeSession(_currentUser!);
+        return AuthResult(success: true, user: _currentUser);
+      }
+      return result;
+    } catch (e) {
+      return AuthResult(
+        success: false,
+        error: 'Failed to refresh user: ${e.toString()}',
+      );
+    }
+  }
+
   // Get user profile by ID
   Future<AuthResult> getUserProfile(String userId) async {
     try {
@@ -232,14 +254,31 @@ class AuthService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userJson = prefs.getString(_userKey);
+      final token = prefs.getString(_tokenKey);
 
-      if (userJson != null) {
+      if (userJson != null && token != null) {
         final userData = jsonDecode(userJson);
-        _currentUser = User.fromJson(userData);
+        final user = User.fromJson(userData);
+
+        // Validate that user data is complete
+        if (user.id.isNotEmpty &&
+            user.firstName.isNotEmpty &&
+            user.lastName.isNotEmpty) {
+          _currentUser = user;
+
+          // Optionally refresh user data from server to ensure it's up to date
+          // This is commented out to avoid network calls on every app start
+          // You can uncomment if you want fresh data on each app launch
+          // await refreshCurrentUser();
+        } else {
+          // User data is incomplete, clear session
+          await logout();
+        }
       }
     } catch (e) {
       // Handle error silently - user will need to login again
-      _currentUser = null;
+      // Clear potentially corrupted session data
+      await logout();
     }
   }
 

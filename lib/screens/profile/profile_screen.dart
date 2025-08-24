@@ -13,6 +13,55 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _authService = AuthService();
+  bool _isRefreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAndRefreshUserData();
+  }
+
+  Future<void> _checkAndRefreshUserData() async {
+    final user = _authService.currentUser;
+    if (user == null || user.firstName.isEmpty || user.lastName.isEmpty) {
+      await _refreshUserData();
+    }
+  }
+
+  Future<void> _refreshUserData() async {
+    if (_isRefreshing) return;
+
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      final result = await _authService.refreshCurrentUser();
+      if (!result.success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.error ?? 'Failed to load profile data'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading profile: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
+  }
 
   void _showLogoutDialog() {
     showDialog(
@@ -415,6 +464,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         automaticallyImplyLeading: false,
         actions: [
+          if (_isRefreshing)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryGreen,
+                  strokeWidth: 2,
+                ),
+              ),
+            )
+          else
+            IconButton(
+              onPressed: _refreshUserData,
+              icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
+              tooltip: 'Refresh Profile',
+            ),
           IconButton(
             onPressed: () {
               // Copy user ID to clipboard
@@ -432,151 +499,159 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Profile Header
-            _buildProfileHeader(),
+      body: RefreshIndicator(
+        onRefresh: _refreshUserData,
+        color: AppColors.primaryGreen,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              // Profile Header
+              _buildProfileHeader(),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Account Information Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Account Information',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+              // Account Information Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Account Information',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // Account Details
-            _buildInfoCard(
-              title: 'Full Name',
-              value: user?.fullName ?? 'N/A',
-              icon: Icons.person_outline,
-            ),
+              // Account Details
+              _buildInfoCard(
+                title: 'Full Name',
+                value: user?.fullName ?? 'N/A',
+                icon: Icons.person_outline,
+              ),
 
-            _buildInfoCard(
-              title: 'Phone Number',
-              value: user?.phone ?? 'N/A',
-              icon: Icons.phone_outlined,
-            ),
+              _buildInfoCard(
+                title: 'Phone Number',
+                value: user?.phone ?? 'N/A',
+                icon: Icons.phone_outlined,
+              ),
 
-            _buildInfoCard(
-              title: 'Barangay',
-              value: user?.barangay ?? 'N/A',
-              icon: Icons.location_city_outlined,
-            ),
+              _buildInfoCard(
+                title: 'Barangay',
+                value: user?.barangay ?? 'N/A',
+                icon: Icons.location_city_outlined,
+              ),
 
-            _buildInfoCard(
-              title: 'Member Since',
-              value: _formatDate(user?.createdAt),
-              icon: Icons.calendar_today_outlined,
-            ),
+              _buildInfoCard(
+                title: 'Member Since',
+                value: _formatDate(user?.createdAt),
+                icon: Icons.calendar_today_outlined,
+              ),
 
-            _buildInfoCard(
-              title: 'User ID',
-              value: user?.id ?? 'N/A',
-              icon: Icons.fingerprint,
-              onTap: () {
-                if (user?.id != null) {
-                  Clipboard.setData(ClipboardData(text: user!.id));
+              _buildInfoCard(
+                title: 'User ID',
+                value: user?.id ?? 'N/A',
+                icon: Icons.fingerprint,
+                onTap: () {
+                  if (user?.id != null) {
+                    Clipboard.setData(ClipboardData(text: user!.id));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('User ID copied to clipboard'),
+                        backgroundColor: AppColors.primaryGreen,
+                      ),
+                    );
+                  }
+                },
+              ),
+
+              const SizedBox(height: 32),
+
+              // Actions Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Actions',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Action Buttons
+              _buildActionButton(
+                title: 'Report Status',
+                icon: Icons.assignment_outlined,
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.issueStatus);
+                },
+              ),
+
+              _buildActionButton(
+                title: 'Settings',
+                icon: Icons.settings_outlined,
+                onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('User ID copied to clipboard'),
+                      content: Text('Settings screen coming soon!'),
                       backgroundColor: AppColors.primaryGreen,
                     ),
                   );
-                }
-              },
-            ),
+                },
+              ),
 
-            const SizedBox(height: 32),
+              _buildActionButton(
+                title: 'Help & Support',
+                icon: Icons.help_outline,
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Help & Support coming soon!'),
+                      backgroundColor: AppColors.primaryGreen,
+                    ),
+                  );
+                },
+              ),
 
-            // Actions Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Align(
-                alignment: Alignment.centerLeft,
+              _buildActionButton(
+                title: 'Logout',
+                icon: Icons.logout,
+                onTap: _showLogoutDialog,
+                color: AppColors.error,
+                isDanger: true,
+              ),
+
+              const SizedBox(height: 32),
+
+              // App Version
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
-                  'Actions',
+                  'Green Tagbilaran v1.0.0',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
 
-            const SizedBox(height: 12),
-
-            // Action Buttons
-            _buildActionButton(
-              title: 'Report Status',
-              icon: Icons.assignment_outlined,
-              onTap: () {
-                Navigator.pushNamed(context, AppRoutes.issueStatus);
-              },
-            ),
-
-            _buildActionButton(
-              title: 'Settings',
-              icon: Icons.settings_outlined,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Settings screen coming soon!'),
-                    backgroundColor: AppColors.primaryGreen,
-                  ),
-                );
-              },
-            ),
-
-            _buildActionButton(
-              title: 'Help & Support',
-              icon: Icons.help_outline,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Help & Support coming soon!'),
-                    backgroundColor: AppColors.primaryGreen,
-                  ),
-                );
-              },
-            ),
-
-            _buildActionButton(
-              title: 'Logout',
-              icon: Icons.logout,
-              onTap: _showLogoutDialog,
-              color: AppColors.error,
-              isDanger: true,
-            ),
-
-            const SizedBox(height: 32),
-
-            // App Version
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                'Green Tagbilaran v1.0.0',
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-            const SizedBox(height: 32),
-          ],
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );

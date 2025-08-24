@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../../constants/routes.dart';
 import '../../constants/onboarding_data.dart';
+import '../../services/auth_service.dart';
+import '../../models/user.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -36,7 +38,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _completeOnboarding() {
-    Navigator.pushReplacementNamed(context, AppRoutes.main);
+    final authService = AuthService();
+
+    // Check if user is properly logged in
+    if (authService.isLoggedIn && authService.currentUser != null) {
+      final user = authService.currentUser!;
+
+      // Navigate based on user role
+      switch (user.userRole) {
+        case UserRole.admin:
+          Navigator.pushReplacementNamed(context, AppRoutes.adminMain);
+          break;
+        case UserRole.truckDriver:
+          Navigator.pushReplacementNamed(context, AppRoutes.truckDriverMain);
+          break;
+        case UserRole.user:
+          Navigator.pushReplacementNamed(context, AppRoutes.main);
+          break;
+      }
+    } else {
+      // If not properly authenticated, go to login screen
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
+    }
   }
 
   Widget _buildPageIndicator() {
@@ -65,7 +88,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     bool isPrimary = false,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
         color: isPrimary ? AppColors.primaryGreen : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
@@ -81,15 +103,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
       child: Material(
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: onPressed,
-          child: Text(
-            text,
-            style: TextStyle(
-              color: isPrimary ? Colors.white : AppColors.textSecondary,
-              fontSize: 16,
-              fontWeight: isPrimary ? FontWeight.w600 : FontWeight.w500,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            child: Text(
+              text,
+              style: TextStyle(
+                color: isPrimary ? Colors.white : AppColors.textSecondary,
+                fontSize: 16,
+                fontWeight: isPrimary ? FontWeight.w600 : FontWeight.w500,
+              ),
             ),
           ),
         ),
