@@ -93,38 +93,56 @@ CREATE TRIGGER update_reports_updated_at
   FOR EACH ROW 
   EXECUTE FUNCTION public.update_updated_at_column();
 
--- Function to submit a report with image
+-- Function to submit a report with multiple images
 CREATE OR REPLACE FUNCTION public.submit_report(
   p_user_id UUID,
   p_full_name VARCHAR(200),
   p_phone VARCHAR(20),
   p_barangay VARCHAR(50),
   p_issue_description TEXT,
-  p_image_data TEXT DEFAULT NULL,
-  p_image_type VARCHAR(10) DEFAULT NULL,
-  p_file_size INTEGER DEFAULT NULL
+  p_images JSON DEFAULT NULL
 )
 RETURNS JSON AS $$
 DECLARE
   report_id UUID;
-  image_id UUID;
+  image_record JSON;
+  image_ids UUID[] := '{}';
 BEGIN
   -- Insert report
   INSERT INTO public.reports (user_id, full_name, phone, barangay, issue_description)
   VALUES (p_user_id, p_full_name, p_phone, p_barangay, p_issue_description)
   RETURNING id INTO report_id;
   
-  -- Insert image if provided
-  IF p_image_data IS NOT NULL AND p_image_type IS NOT NULL THEN
-    INSERT INTO public.report_images (report_id, image_data, image_type, file_size)
-    VALUES (report_id, p_image_data, p_image_type, p_file_size)
-    RETURNING id INTO image_id;
+  -- Insert images if provided
+  IF p_images IS NOT NULL THEN
+    FOR image_record IN SELECT * FROM json_array_elements(p_images)
+    LOOP
+      DECLARE
+        new_image_id UUID;
+      BEGIN
+        INSERT INTO public.report_images (
+          report_id, 
+          image_data, 
+          image_type, 
+          file_size
+        )
+        VALUES (
+          report_id,
+          image_record->>'image_data',
+          image_record->>'image_type',
+          (image_record->>'file_size')::INTEGER
+        )
+        RETURNING id INTO new_image_id;
+        
+        image_ids := image_ids || new_image_id;
+      END;
+    END LOOP;
   END IF;
   
   RETURN json_build_object(
     'success', true,
     'report_id', report_id,
-    'image_id', image_id,
+    'image_ids', image_ids,
     'message', 'Report submitted successfully'
   );
   
