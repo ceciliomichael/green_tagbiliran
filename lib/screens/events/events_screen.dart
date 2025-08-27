@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
+import '../../models/announcement.dart';
+import '../../services/announcements_service.dart';
+import '../../widgets/common/announcement_card.dart';
+import '../../widgets/common/loading_indicator.dart';
 
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
@@ -9,6 +13,45 @@ class EventsScreen extends StatefulWidget {
 }
 
 class _EventsScreenState extends State<EventsScreen> {
+  final AnnouncementsService _announcementsService = AnnouncementsService();
+  
+  List<Announcement> _announcements = [];
+  bool _isLoading = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAnnouncements();
+  }
+
+  Future<void> _loadAnnouncements() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final result = await _announcementsService.getAllAnnouncements();
+      
+      if (result.success && result.announcements != null) {
+        setState(() {
+          _announcements = result.announcements!;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = result.error ?? 'Failed to load announcements';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Error loading announcements: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -53,11 +96,109 @@ class _EventsScreenState extends State<EventsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Stay updated with community events and important reminders',
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+                  const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: const Text(
+                'Stay updated with community announcements and events',
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+            ),
+            IconButton(
+              onPressed: _loadAnnouncements,
+              icon: Icon(
+                Icons.refresh,
+                color: Colors.white.withValues(alpha: 0.8),
+              ),
+              tooltip: 'Refresh',
+            ),
+          ],
+        ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnnouncementsList() {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: LoadingIndicator(),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: AppColors.pureWhite,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 60,
+              color: AppColors.error,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Error Loading Announcements',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadAnnouncements,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_announcements.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Recent Announcements (${_announcements.length})',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
           ),
+          const SizedBox(height: 16),
+          ...(_announcements.map((announcement) => AnnouncementCard(
+            announcement: announcement,
+            isAdmin: false,
+          )).toList()),
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -110,7 +251,7 @@ class _EventsScreenState extends State<EventsScreen> {
           ),
           const SizedBox(height: 24),
           const Text(
-            'No Events Yet',
+            'No Announcements Yet',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -119,7 +260,7 @@ class _EventsScreenState extends State<EventsScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Events and reminders from your barangay admin will appear here. Stay tuned for important community updates!',
+            'Announcements and events from your barangay admin will appear here. Stay tuned for important community updates!',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -175,9 +316,8 @@ class _EventsScreenState extends State<EventsScreen> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  const SizedBox(height: 40),
-                  _buildEmptyState(),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
+                  _buildAnnouncementsList(),
                 ],
               ),
             ),

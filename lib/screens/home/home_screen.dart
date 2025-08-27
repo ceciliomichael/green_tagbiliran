@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (daysUntil == 1) {
       return 'Tomorrow (${dayNames[nextDay]})';
     } else if (daysUntil < 7) {
-      return '${dayNames[nextDay]} (${daysUntil} days)';
+      return '${dayNames[nextDay]} ($daysUntil days)';
     } else {
       return 'Next ${dayNames[nextDay]}';
     }

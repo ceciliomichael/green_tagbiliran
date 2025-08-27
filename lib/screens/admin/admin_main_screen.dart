@@ -87,33 +87,40 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.admin_panel_settings,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Admin Dashboard',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.admin_panel_settings,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Admin Dashboard',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'Green Tagbilaran Management',
+                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      Text(
-                        'Green Tagbilaran Management',
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               GestureDetector(
                 onTap: () {
                   Navigator.pushReplacementNamed(context, AppRoutes.login);
@@ -144,16 +151,19 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                 width: 1,
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.location_on, color: Colors.white, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Tagbilaran City, Bohol - Administrative Control',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                const Icon(Icons.location_on, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: const Text(
+                    'Tagbilaran City, Bohol - Administrative Control',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -223,12 +233,15 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           if (badge != null) ...[
