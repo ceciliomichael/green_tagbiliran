@@ -166,7 +166,7 @@ RETURNS JSON AS $$
 DECLARE
   user_record RECORD;
 BEGIN
-  SELECT id, first_name, last_name, phone, barangay, created_at
+  SELECT id, first_name, last_name, phone, barangay, user_role, created_at
   INTO user_record
   FROM public.users 
   WHERE id = p_user_id;
@@ -186,6 +186,7 @@ BEGIN
       'last_name', user_record.last_name,
       'phone', user_record.phone,
       'barangay', user_record.barangay,
+      'user_role', COALESCE(user_record.user_role, 'user'),
       'created_at', user_record.created_at
     )
   );

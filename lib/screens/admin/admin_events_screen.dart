@@ -79,7 +79,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           Row(
             children: [
               GestureDetector(
-                onTap: () => Navigator.pop(context),
+                onTap: () => Navigator.pop(context, true),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(

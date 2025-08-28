@@ -12,6 +12,13 @@ class SupabaseConfig {
   static const String registerUserEndpoint = '$baseApiUrl/register_user';
   static const String loginUserEndpoint = '$baseApiUrl/login_user';
   static const String getUserProfileEndpoint = '$baseApiUrl/get_user_profile';
+  static const String createTruckDriverEndpoint = '$baseApiUrl/create_truck_driver';
+
+  // Truck driver management endpoints
+  static const String getAllTruckDriversEndpoint = '$baseApiUrl/get_all_truck_drivers';
+  static const String updateTruckDriverEndpoint = '$baseApiUrl/update_truck_driver';
+  static const String resetTruckDriverPasswordEndpoint = '$baseApiUrl/reset_truck_driver_password';
+  static const String deleteTruckDriverEndpoint = '$baseApiUrl/delete_truck_driver';
 
   // Reports endpoints
   static const String submitReportEndpoint = '$baseApiUrl/submit_report';

@@ -4,6 +4,8 @@ import '../../constants/colors.dart';
 import '../../constants/routes.dart';
 import '../../constants/map_constants.dart';
 import '../../widgets/track/map_widget.dart';
+import '../../services/auth_service.dart';
+import '../../models/user.dart';
 
 class TruckDriverMainScreen extends StatefulWidget {
   const TruckDriverMainScreen({super.key});
@@ -19,15 +21,39 @@ class _TruckDriverMainScreenState extends State<TruckDriverMainScreen> {
   String? _startLocation;
   String? _endLocation;
   LatLng? _currentPosition;
-
-  // Assigned barangay (set by admin when account was created)
-  final String _assignedBarangay =
-      'Poblacion I'; // This would come from user's account data
+  
+  final _authService = AuthService();
+  User? _currentUser;
+  String _assignedBarangay = 'Loading...';
+  String _driverName = 'Driver';
 
   @override
   void initState() {
     super.initState();
+    _loadUserData();
     _detectCurrentLocation();
+  }
+
+  Future<void> _loadUserData() async {
+    _currentUser = _authService.currentUser;
+    if (_currentUser != null) {
+      setState(() {
+        _assignedBarangay = _currentUser!.barangay;
+        _driverName = _currentUser!.firstName;
+      });
+    } else {
+      // If no user is logged in, redirect to login
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
+    }
+  }
+
+  Future<void> _logout() async {
+    await _authService.logout();
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
+    }
   }
 
   void _detectCurrentLocation() {
@@ -74,10 +100,10 @@ class _TruckDriverMainScreenState extends State<TruckDriverMainScreen> {
                     size: 28,
                   ),
                   const SizedBox(width: 12),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Driver Dashboard',
                         style: TextStyle(
                           color: Colors.white,
@@ -86,17 +112,15 @@ class _TruckDriverMainScreenState extends State<TruckDriverMainScreen> {
                         ),
                       ),
                       Text(
-                        'Route Management',
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                        'Welcome, $_driverName',
+                        style: const TextStyle(color: Colors.white70, fontSize: 14),
                       ),
                     ],
                   ),
                 ],
               ),
               GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacementNamed(context, AppRoutes.login);
-                },
+                onTap: _logout,
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(

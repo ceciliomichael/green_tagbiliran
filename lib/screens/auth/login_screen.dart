@@ -526,7 +526,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 16),
 
-                        // Truck Driver access button
+                        // Note for truck drivers
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Container(
@@ -552,15 +552,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                             ),
-                            child: Column(
+                            child: const Column(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.local_shipping_outlined,
                                   color: AppColors.primaryGreen,
                                   size: 32,
                                 ),
-                                const SizedBox(height: 12),
-                                const Text(
+                                SizedBox(height: 12),
+                                Text(
                                   'Truck Driver Access',
                                   style: TextStyle(
                                     fontSize: 16,
@@ -568,41 +568,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: AppColors.textPrimary,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Access route management and collection tracking',
+                                SizedBox(height: 8),
+                                Text(
+                                  'Truck drivers should use their assigned phone number and password to sign in above. Your account is created by the admin.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 48,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pushReplacementNamed(
-                                        context,
-                                        AppRoutes.truckDriverMain,
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primaryGreen,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Enter Driver Dashboard',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
                                   ),
                                 ),
                               ],

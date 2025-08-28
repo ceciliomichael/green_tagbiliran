@@ -1,6 +1,39 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../constants/colors.dart';
+import '../../services/auth_service.dart';
+
+class TruckDriver {
+  final String id;
+  final String firstName;
+  final String lastName;
+  final String phone;
+  final String barangay;
+  final String createdAt;
+
+  TruckDriver({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    required this.phone,
+    required this.barangay,
+    required this.createdAt,
+  });
+
+  String get fullName => '$firstName $lastName';
+
+  factory TruckDriver.fromJson(Map<String, dynamic> json) {
+    return TruckDriver(
+      id: json['id'] as String,
+      firstName: json['first_name'] as String,
+      lastName: json['last_name'] as String,
+      phone: json['phone'] as String,
+      barangay: json['barangay'] as String,
+      createdAt: json['created_at'] as String,
+    );
+  }
+}
 
 class AdminTruckDriversScreen extends StatefulWidget {
   const AdminTruckDriversScreen({super.key});
@@ -12,9 +45,17 @@ class AdminTruckDriversScreen extends StatefulWidget {
 
 class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
+
+  bool _isCreatingAccount = false;
+  bool _isLoadingDrivers = false;
+  List<TruckDriver> _drivers = [];
+  String? _selectedBarangay;
+  bool _showCreateForm = false;
 
   final List<String> _barangayAssignments = [
     'Booy',
@@ -32,15 +73,68 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
     'Ubujan',
   ];
 
-  String? _selectedBarangay;
+  @override
+  void initState() {
+    super.initState();
+    _loadTruckDrivers();
+  }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
+
+  Future<void> _loadTruckDrivers() async {
+    setState(() {
+      _isLoadingDrivers = true;
+    });
+
+    try {
+      final result = await _authService.getAllTruckDrivers();
+      if (result.success) {
+        final driversData = result.message ?? '[]';
+        final List<dynamic> driversList = jsonDecode(driversData) as List<dynamic>;
+        
+        setState(() {
+          _drivers = driversList
+              .map((driver) => TruckDriver.fromJson(driver as Map<String, dynamic>))
+              .toList();
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Failed to load truck drivers'),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading drivers: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingDrivers = false;
+        });
+      }
+    }
+  }
+
+
 
   Widget _buildHeader() {
     return Container(
@@ -86,10 +180,29 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
                       ),
                     ),
                     Text(
-                      'Create and manage driver accounts',
+                      'Manage driver accounts and assignments',
                       style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showCreateForm = !_showCreateForm;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _showCreateForm ? Icons.close : Icons.add,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
               ),
             ],
@@ -105,18 +218,29 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
                 width: 1,
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.local_shipping, color: Colors.white, size: 20),
-                SizedBox(width: 8),
+                const Icon(Icons.local_shipping, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
                 Text(
-                  'Registered Drivers: 0',
-                  style: TextStyle(
+                  'Registered Drivers: ${_drivers.length}',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                if (_isLoadingDrivers) ...[
+                  const SizedBox(width: 8),
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -136,7 +260,7 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
     bool obscureText = false,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
         validator: validator,
@@ -161,33 +285,33 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
             child: Icon(icon, color: AppColors.textSecondary, size: 20),
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(
               color: AppColors.primaryGreen,
               width: 2,
             ),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: AppColors.error, width: 2),
           ),
           filled: true,
           fillColor: AppColors.surfaceWhite,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
-            vertical: 20,
+            vertical: 16,
           ),
           labelStyle: const TextStyle(
             color: AppColors.textSecondary,
-            fontSize: 16,
+            fontSize: 14,
           ),
         ),
       ),
@@ -196,14 +320,14 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
 
   Widget _buildBarangayDropdown() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 16),
       child: GestureDetector(
         onTap: _showBarangaySelectionDialog,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
             color: AppColors.surfaceWhite,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _selectedBarangay == null
                   ? Colors.transparent
@@ -370,7 +494,6 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
   }
 
   String _generatePassword() {
-    // Simple password generation
     const chars =
         'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final random = DateTime.now().millisecondsSinceEpoch;
@@ -380,138 +503,1073 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
     ).join();
   }
 
-  void _createDriverAccount() {
-    if (_formKey.currentState!.validate() && _selectedBarangay != null) {
+  Future<void> _createDriverAccount() async {
+    if (!_formKey.currentState!.validate() || _selectedBarangay == null) {
+      if (_selectedBarangay == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select a barangay assignment'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isCreatingAccount = true;
+    });
+
+    try {
       // Generate password if not provided
       if (_passwordController.text.isEmpty) {
         _passwordController.text = _generatePassword();
       }
 
-      // Show success dialog
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+      // Format phone number to include +63 prefix
+      final phoneNumber = '+63${_phoneController.text.trim()}';
+
+      // Create truck driver account
+      final result = await _authService.createTruckDriverAccount(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        phone: phoneNumber,
+        password: _passwordController.text,
+        barangay: _selectedBarangay!,
+      );
+
+      if (mounted) {
+        if (result.success) {
+          // Show success dialog
+          _showSuccessDialog();
+          // Reload drivers list
+          _loadTruckDrivers();
+        } else {
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Failed to create driver account'),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
             ),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: const Icon(
-                      Icons.check_circle,
-                      color: AppColors.primaryGreen,
-                      size: 30,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreatingAccount = false;
+        });
+      }
+    }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: const Icon(
+                    Icons.check_circle,
+                    color: AppColors.primaryGreen,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Driver Account Created',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Account for ${_firstNameController.text} ${_lastNameController.text} has been successfully created.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceWhite,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.2),
+                      width: 1,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Account Details:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Name: ${_firstNameController.text} ${_lastNameController.text}'),
+                      Text('Phone: +63 ${_phoneController.text}'),
+                      Text('Password: ${_passwordController.text}'),
+                      Text('Barangay: $_selectedBarangay'),
+                      const Text('Role: Truck Driver'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _clearForm();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text(
+                      'Continue',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _clearForm() {
+    _firstNameController.clear();
+    _lastNameController.clear();
+    _phoneController.clear();
+    _passwordController.clear();
+    setState(() {
+      _selectedBarangay = null;
+      _showCreateForm = false;
+    });
+  }
+
+  Widget _buildCreateDriverForm() {
+    if (!_showCreateForm) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowDark.withValues(alpha: 0.1),
+            offset: const Offset(0, 4),
+            blurRadius: 12,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Create New Driver Account',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // First Name and Last Name in a row
+            Row(
+              children: [
+                Expanded(
+                  child: _buildFormField(
+                    controller: _firstNameController,
+                    label: 'First Name',
+                    icon: Icons.person_outline,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Required';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildFormField(
+                    controller: _lastNameController,
+                    label: 'Last Name',
+                    icon: Icons.person_outline,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Required';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            _buildFormField(
+              controller: _phoneController,
+              label: 'Phone Number',
+              icon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+              prefixText: '+63 ',
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter phone number';
+                }
+                if (value.length != 10) {
+                  return 'Phone number must be 10 digits';
+                }
+                return null;
+              },
+            ),
+
+            _buildBarangayDropdown(),
+
+            _buildFormField(
+              controller: _passwordController,
+              label: 'Password (leave empty to auto-generate)',
+              icon: Icons.lock_outline,
+              obscureText: true,
+            ),
+
+            const SizedBox(height: 8),
+
+            Container(
+              width: double.infinity,
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryGreen,
+                    AppColors.accent,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryGreen.withValues(
+                      alpha: 0.4,
+                    ),
+                    offset: const Offset(0, 8),
+                    blurRadius: 16,
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: _isCreatingAccount ? null : _createDriverAccount,
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    alignment: Alignment.center,
+                    child: _isCreatingAccount
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Creating Account...',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_circle_outline,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Create Driver Account',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDriversList() {
+    if (_isLoadingDrivers) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+          ),
+        ),
+      );
+    }
+
+    if (_drivers.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(40),
+        decoration: BoxDecoration(
+          color: AppColors.pureWhite,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowDark.withValues(alpha: 0.1),
+              offset: const Offset(0, 4),
+              blurRadius: 12,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: const Column(
+          children: [
+            Icon(
+              Icons.local_shipping_outlined,
+              size: 64,
+              color: AppColors.textSecondary,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'No Truck Drivers Yet',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Create your first truck driver account to get started',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowDark.withValues(alpha: 0.1),
+            offset: const Offset(0, 4),
+            blurRadius: 12,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Registered Truck Drivers',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _drivers.length,
+            separatorBuilder: (context, index) => const Divider(
+              height: 1,
+              color: AppColors.surfaceWhite,
+            ),
+            itemBuilder: (context, index) {
+              final driver = _drivers[index];
+              return _buildDriverTile(driver);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDriverTile(TruckDriver driver) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppColors.primaryGreen.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.local_shipping,
+              color: AppColors.primaryGreen,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  driver.fullName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  driver.phone,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_city,
+                      size: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      driver.barangay,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
+            onSelected: (String action) {
+              switch (action) {
+                case 'edit':
+                  _showEditDriverDialog(driver);
+                  break;
+                case 'reset_password':
+                  _showResetPasswordDialog(driver);
+                  break;
+                case 'delete':
+                  _showDeleteConfirmDialog(driver);
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, color: AppColors.primaryGreen),
+                    SizedBox(width: 8),
+                    Text('Edit'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'reset_password',
+                child: Row(
+                  children: [
+                    Icon(Icons.lock_reset, color: AppColors.textSecondary),
+                    SizedBox(width: 8),
+                    Text('Reset Password'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, color: AppColors.error),
+                    SizedBox(width: 8),
+                    Text('Delete'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDriverDialog(TruckDriver driver) {
+    final editFirstNameController = TextEditingController(text: driver.firstName);
+    final editLastNameController = TextEditingController(text: driver.lastName);
+    final editPhoneController = TextEditingController(
+      text: driver.phone.replaceFirst('+63', ''),
+    );
+    String editSelectedBarangay = driver.barangay;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 500),
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   const Text(
-                    'Driver Account Created',
+                    'Edit Driver Information',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Account for ${_nameController.text} has been successfully created.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
                   const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.primaryGreen.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Account Details:',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                  
+                  // First Name and Last Name
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: editFirstNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'First Name',
+                            border: OutlineInputBorder(),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text('Phone: +63 ${_phoneController.text}'),
-                        Text('Password: ${_passwordController.text}'),
-                        Text('Barangay: $_selectedBarangay'),
-                        Text('Role: Truck Driver'),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: editLastNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Last Name',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _clearForm();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: const Text(
-                        'Continue',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                  const SizedBox(height: 16),
+                  
+                  // Phone Number
+                  TextField(
+                    controller: editPhoneController,
+                    decoration: const InputDecoration(
+                      labelText: 'Phone Number',
+                      prefixText: '+63 ',
+                      border: OutlineInputBorder(),
                     ),
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Barangay Dropdown
+                  DropdownButtonFormField<String>(
+                    value: editSelectedBarangay,
+                    decoration: const InputDecoration(
+                      labelText: 'Barangay Assignment',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _barangayAssignments.map((String barangay) {
+                      return DropdownMenuItem<String>(
+                        value: barangay,
+                        child: Text(barangay),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        editSelectedBarangay = newValue;
+                      }
+                    },
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            await _updateDriver(
+                              driver.id,
+                              editFirstNameController.text.trim(),
+                              editLastNameController.text.trim(),
+                              '+63${editPhoneController.text.trim()}',
+                              editSelectedBarangay,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Update'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showResetPasswordDialog(TruckDriver driver) {
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Reset Password for ${driver.fullName}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: passwordController,
+                  decoration: InputDecoration(
+                    labelText: 'New Password',
+                    border: const OutlineInputBorder(),
+                    hintText: 'Leave empty to auto-generate',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.auto_awesome),
+                      onPressed: () {
+                        passwordController.text = _generatePassword();
+                      },
+                    ),
+                  ),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final newPassword = passwordController.text.isEmpty
+                              ? _generatePassword()
+                              : passwordController.text;
+                          Navigator.of(context).pop();
+                          await _resetDriverPassword(driver.id, newPassword);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Reset'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmDialog(TruckDriver driver) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  size: 60,
+                  color: AppColors.error,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Delete Driver Account',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Are you sure you want to delete ${driver.fullName}\'s account? This action cannot be undone.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          await _deleteDriver(driver.id);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.error,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Delete'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _updateDriver(String driverId, String firstName, String lastName, String phone, String barangay) async {
+    try {
+      final result = await _authService.updateTruckDriver(
+        driverId: driverId,
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+        barangay: barangay,
+      );
+
+      if (mounted) {
+        if (result.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Driver updated successfully'),
+              backgroundColor: AppColors.primaryGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
           );
-        },
-      );
-    } else if (_selectedBarangay == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a barangay assignment'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+          _loadTruckDrivers();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Failed to update driver'),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
-  void _clearForm() {
-    _nameController.clear();
-    _phoneController.clear();
-    _passwordController.clear();
-    setState(() {
-      _selectedBarangay = null;
-    });
+  Future<void> _resetDriverPassword(String driverId, String newPassword) async {
+    try {
+      final result = await _authService.resetTruckDriverPassword(
+        driverId: driverId,
+        newPassword: newPassword,
+      );
+
+      if (mounted) {
+        if (result.success) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        size: 60,
+                        color: AppColors.primaryGreen,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Password Reset Successfully',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWhite,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.primaryGreen.withValues(alpha: 0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            const Text(
+                              'New Password:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              newPassword,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'monospace',
+                                color: AppColors.primaryGreen,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('OK'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Failed to reset password'),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteDriver(String driverId) async {
+    try {
+      final result = await _authService.deleteTruckDriver(driverId);
+
+      if (mounted) {
+        if (result.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Driver deleted successfully'),
+              backgroundColor: AppColors.primaryGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          _loadTruckDrivers();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Failed to delete driver'),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -523,210 +1581,9 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
           child: Column(
             children: [
               _buildHeader(),
-
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Create Driver Account',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Fill in the driver information to create a new truck driver account',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: AppColors.pureWhite,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.shadowDark.withValues(alpha: 0.1),
-                            offset: const Offset(0, 4),
-                            blurRadius: 12,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildFormField(
-                              controller: _nameController,
-                              label: 'Driver Name',
-                              icon: Icons.person_outline,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter driver name';
-                                }
-                                return null;
-                              },
-                            ),
-
-                            _buildFormField(
-                              controller: _phoneController,
-                              label: 'Phone Number',
-                              icon: Icons.phone_outlined,
-                              keyboardType: TextInputType.phone,
-                              prefixText: '+63 ',
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(10),
-                              ],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter phone number';
-                                }
-                                if (value.length != 10) {
-                                  return 'Phone number must be 10 digits';
-                                }
-                                return null;
-                              },
-                            ),
-
-                            _buildBarangayDropdown(),
-
-                            _buildFormField(
-                              controller: _passwordController,
-                              label: 'Password (leave empty to auto-generate)',
-                              icon: Icons.lock_outline,
-                              obscureText: true,
-                            ),
-
-                            const SizedBox(height: 8),
-
-                            Container(
-                              width: double.infinity,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppColors.primaryGreen,
-                                    AppColors.accent,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primaryGreen.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                    offset: const Offset(0, 8),
-                                    blurRadius: 16,
-                                  ),
-                                ],
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                borderRadius: BorderRadius.circular(16),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(16),
-                                  onTap: _createDriverAccount,
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    alignment: Alignment.center,
-                                    child: const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.add_circle_outline,
-                                          color: Colors.white,
-                                          size: 20,
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Create Driver Account',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            letterSpacing: 0.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Info section
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.primaryGreen.withValues(alpha: 0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                color: AppColors.primaryGreen,
-                                size: 20,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Driver Account Information',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            '• Each driver is assigned to one specific barangay\n'
-                            '• Drivers can start routes from their current location\n'
-                            '• Route endpoints must be within their assigned barangay\n'
-                            '• Users and admin receive notifications when routes start\n'
-                            '• Driver location is tracked during active routes',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildCreateDriverForm(),
+              _buildDriversList(),
+              const SizedBox(height: 40),
             ],
           ),
         ),

@@ -180,6 +180,61 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 GRANT EXECUTE ON FUNCTION public.create_admin_account TO anon;
 GRANT EXECUTE ON FUNCTION public.create_truck_driver_account TO authenticated;
 
+-- Function to create truck driver account (simplified for API use)
+CREATE OR REPLACE FUNCTION public.create_truck_driver(
+  p_first_name VARCHAR(100),
+  p_last_name VARCHAR(100),
+  p_phone VARCHAR(20),
+  p_password TEXT,
+  p_barangay VARCHAR(50),
+  p_user_role VARCHAR(20) DEFAULT 'truck_driver'
+)
+RETURNS JSON AS $$
+DECLARE
+  driver_id UUID;
+  hashed_password TEXT;
+BEGIN
+  -- Check if phone already exists
+  IF EXISTS (SELECT 1 FROM public.users WHERE phone = p_phone) THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'Phone number already registered'
+    );
+  END IF;
+  
+  -- Validate user role
+  IF p_user_role NOT IN ('truck_driver') THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'Invalid user role'
+    );
+  END IF;
+  
+  -- Hash the password using crypt
+  hashed_password := crypt(p_password, gen_salt('bf'));
+  
+  -- Insert new truck driver
+  INSERT INTO public.users (first_name, last_name, phone, password_hash, barangay, user_role)
+  VALUES (p_first_name, p_last_name, p_phone, hashed_password, p_barangay, p_user_role)
+  RETURNING id INTO driver_id;
+  
+  RETURN json_build_object(
+    'success', true,
+    'driver_id', driver_id,
+    'message', 'Truck driver account created successfully'
+  );
+  
+EXCEPTION WHEN OTHERS THEN
+  RETURN json_build_object(
+    'success', false,
+    'error', 'Driver creation failed: ' || SQLERRM
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Grant permission for the new function
+GRANT EXECUTE ON FUNCTION public.create_truck_driver TO anon;
+
 -- Sample admin accounts (CHANGE THESE PASSWORDS!)
 -- To create your first admin account, run one of these:
 
@@ -205,3 +260,4 @@ GRANT EXECUTE ON FUNCTION public.create_truck_driver_account TO authenticated;
 COMMENT ON COLUMN public.users.user_role IS 'User role: user, admin, or truck_driver';
 COMMENT ON FUNCTION public.create_admin_account IS 'Create a new admin account';
 COMMENT ON FUNCTION public.create_truck_driver_account IS 'Create a new truck driver account (admin only)';
+COMMENT ON FUNCTION public.create_truck_driver IS 'Create a new truck driver account (API endpoint)';

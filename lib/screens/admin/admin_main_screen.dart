@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../../constants/routes.dart';
 import '../../services/reports_service.dart';
+import '../../services/announcements_service.dart';
 import '../../services/auth_service.dart';
 import '../../models/report.dart';
 
@@ -14,16 +15,22 @@ class AdminMainScreen extends StatefulWidget {
 
 class _AdminMainScreenState extends State<AdminMainScreen> {
   final _reportsService = ReportsService();
+  final _announcementsService = AnnouncementsService();
   final _authService = AuthService();
 
   int _activeReportsCount = 0;
   bool _isLoadingReports = true;
   String? _reportsError;
 
+  int _activeEventsCount = 0;
+  bool _isLoadingEvents = true;
+  String? _eventsError;
+
   @override
   void initState() {
     super.initState();
     _loadActiveReportsCount();
+    _loadActiveEventsCount();
   }
 
   Future<void> _loadActiveReportsCount() async {
@@ -67,6 +74,43 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       setState(() {
         _reportsError = 'An error occurred: ${e.toString()}';
         _isLoadingReports = false;
+      });
+    }
+  }
+
+  Future<void> _loadActiveEventsCount() async {
+    final currentUser = _authService.currentUser;
+    if (currentUser == null) {
+      setState(() {
+        _eventsError = 'User not logged in';
+        _isLoadingEvents = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingEvents = true;
+      _eventsError = null;
+    });
+
+    try {
+      final result = await _announcementsService.getAnnouncementsByAdmin(currentUser.id);
+
+      if (result.success && result.announcements != null) {
+        setState(() {
+          _activeEventsCount = result.announcements!.length;
+          _isLoadingEvents = false;
+        });
+      } else {
+        setState(() {
+          _eventsError = result.error ?? 'Failed to load events';
+          _isLoadingEvents = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _eventsError = 'An error occurred: ${e.toString()}';
+        _isLoadingEvents = false;
       });
     }
   }
@@ -379,29 +423,53 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                   ),
                 ],
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.event_outlined,
                     color: AppColors.primaryGreen,
                     size: 32,
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    '0',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Text(
+                  const SizedBox(height: 8),
+                  _isLoadingEvents
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.primaryGreen,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          _eventsError != null ? '?' : '$_activeEventsCount',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: _eventsError != null
+                                ? AppColors.error
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                  const Text(
                     'Active Events',
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
                   ),
+                  if (_eventsError != null) ...[
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      onTap: _loadActiveEventsCount,
+                      child: const Icon(
+                        Icons.refresh,
+                        size: 16,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -417,7 +485,12 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       backgroundColor: AppColors.surfaceWhite,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: _loadActiveReportsCount,
+          onRefresh: () async {
+            await Future.wait([
+              _loadActiveReportsCount(),
+              _loadActiveEventsCount(),
+            ]);
+          },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
@@ -464,8 +537,20 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                         description:
                             'Create, edit, and manage community events and reminders',
                         icon: Icons.event_outlined,
-                        onTap: () {
-                          Navigator.pushNamed(context, AppRoutes.adminEvents);
+                        badge: _isLoadingEvents || _eventsError != null
+                            ? null
+                            : _activeEventsCount > 0
+                            ? '$_activeEventsCount'
+                            : null,
+                        onTap: () async {
+                          final result = await Navigator.pushNamed(
+                            context,
+                            AppRoutes.adminEvents,
+                          );
+                          // Refresh count when returning from events screen
+                          if (result == true || mounted) {
+                            _loadActiveEventsCount();
+                          }
                         },
                       ),
                       _buildAdminCard(

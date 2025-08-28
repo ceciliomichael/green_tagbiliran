@@ -103,6 +103,82 @@ class AuthService {
     }
   }
 
+  // Create truck driver account (admin function)
+  Future<AuthResult> createTruckDriverAccount({
+    required String firstName,
+    required String lastName,
+    required String phone,
+    required String password,
+    required String barangay,
+  }) async {
+    try {
+      // Validate input
+      if (firstName.trim().isEmpty || lastName.trim().isEmpty) {
+        return AuthResult(
+          success: false,
+          error: 'First name and last name are required',
+        );
+      }
+
+      if (phone.trim().isEmpty || !phone.startsWith('+63')) {
+        return AuthResult(
+          success: false,
+          error: 'Valid Philippine phone number is required',
+        );
+      }
+
+      if (password.length < 6) {
+        return AuthResult(
+          success: false,
+          error: 'Password must be at least 6 characters',
+        );
+      }
+
+      // Prepare request body for truck driver creation
+      final requestBody = {
+        'p_first_name': firstName.trim(),
+        'p_last_name': lastName.trim(),
+        'p_phone': phone.trim(),
+        'p_password': password,
+        'p_barangay': barangay,
+        'p_user_role': 'truck_driver',
+      };
+
+      // Make HTTP request to create truck driver function
+      final response = await http.post(
+        Uri.parse(SupabaseConfig.createTruckDriverEndpoint),
+        headers: SupabaseConfig.headers,
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          return AuthResult(
+            success: true, 
+            message: responseData['message'] ?? 'Truck driver account created successfully',
+          );
+        } else {
+          return AuthResult(
+            success: false,
+            error: responseData['error'] ?? 'Failed to create truck driver account',
+          );
+        }
+      } else {
+        return AuthResult(
+          success: false,
+          error: 'Network error: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return AuthResult(
+        success: false,
+        error: 'Failed to create truck driver account: ${e.toString()}',
+      );
+    }
+  }
+
   // Login user
   Future<AuthResult> loginUser({
     required String phone,
@@ -290,6 +366,187 @@ class AuthService {
       _currentUser = null;
     } catch (e) {
       // Handle error silently
+    }
+  }
+
+  // Get all truck drivers
+  Future<AuthResult> getAllTruckDrivers() async {
+    try {
+      final response = await http.post(
+        Uri.parse(SupabaseConfig.getAllTruckDriversEndpoint),
+        headers: SupabaseConfig.headers,
+        body: jsonEncode({}),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          return AuthResult(
+            success: true,
+            message: jsonEncode(responseData['drivers'] ?? []),
+          );
+        } else {
+          return AuthResult(
+            success: false,
+            error: responseData['error'] ?? 'Failed to get truck drivers',
+          );
+        }
+      } else {
+        return AuthResult(
+          success: false,
+          error: 'Network error: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return AuthResult(
+        success: false,
+        error: 'Failed to get truck drivers: ${e.toString()}',
+      );
+    }
+  }
+
+  // Update truck driver
+  Future<AuthResult> updateTruckDriver({
+    required String driverId,
+    required String firstName,
+    required String lastName,
+    required String phone,
+    required String barangay,
+  }) async {
+    try {
+      final requestBody = {
+        'p_driver_id': driverId,
+        'p_first_name': firstName.trim(),
+        'p_last_name': lastName.trim(),
+        'p_phone': phone.trim(),
+        'p_barangay': barangay,
+      };
+
+      final response = await http.post(
+        Uri.parse(SupabaseConfig.updateTruckDriverEndpoint),
+        headers: SupabaseConfig.headers,
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          return AuthResult(
+            success: true,
+            message: responseData['message'] ?? 'Truck driver updated successfully',
+          );
+        } else {
+          return AuthResult(
+            success: false,
+            error: responseData['error'] ?? 'Failed to update truck driver',
+          );
+        }
+      } else {
+        return AuthResult(
+          success: false,
+          error: 'Network error: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return AuthResult(
+        success: false,
+        error: 'Failed to update truck driver: ${e.toString()}',
+      );
+    }
+  }
+
+  // Reset truck driver password
+  Future<AuthResult> resetTruckDriverPassword({
+    required String driverId,
+    required String newPassword,
+  }) async {
+    try {
+      if (newPassword.length < 6) {
+        return AuthResult(
+          success: false,
+          error: 'Password must be at least 6 characters',
+        );
+      }
+
+      final requestBody = {
+        'p_driver_id': driverId,
+        'p_new_password': newPassword,
+      };
+
+      final response = await http.post(
+        Uri.parse(SupabaseConfig.resetTruckDriverPasswordEndpoint),
+        headers: SupabaseConfig.headers,
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          return AuthResult(
+            success: true,
+            message: responseData['message'] ?? 'Password reset successfully',
+          );
+        } else {
+          return AuthResult(
+            success: false,
+            error: responseData['error'] ?? 'Failed to reset password',
+          );
+        }
+      } else {
+        return AuthResult(
+          success: false,
+          error: 'Network error: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return AuthResult(
+        success: false,
+        error: 'Failed to reset password: ${e.toString()}',
+      );
+    }
+  }
+
+  // Delete truck driver
+  Future<AuthResult> deleteTruckDriver(String driverId) async {
+    try {
+      final requestBody = {
+        'p_driver_id': driverId,
+      };
+
+      final response = await http.post(
+        Uri.parse(SupabaseConfig.deleteTruckDriverEndpoint),
+        headers: SupabaseConfig.headers,
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          return AuthResult(
+            success: true,
+            message: responseData['message'] ?? 'Truck driver deleted successfully',
+          );
+        } else {
+          return AuthResult(
+            success: false,
+            error: responseData['error'] ?? 'Failed to delete truck driver',
+          );
+        }
+      } else {
+        return AuthResult(
+          success: false,
+          error: 'Network error: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return AuthResult(
+        success: false,
+        error: 'Failed to delete truck driver: ${e.toString()}',
+      );
     }
   }
 }
