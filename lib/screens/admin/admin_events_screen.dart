@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -154,6 +153,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final formKey = GlobalKey<FormState>();
     XFile? selectedImage;
     bool isCreating = false;
+    final parentContext = context;
 
     showDialog(
       context: context,
@@ -420,29 +420,35 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                         );
 
                                         if (result.success) {
-                                          Navigator.pop(context);
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(result.message ?? 'Announcement created successfully!'),
-                                              backgroundColor: AppColors.success,
-                                            ),
-                                          );
+                                          if (parentContext.mounted) {
+                                            Navigator.of(parentContext).pop();
+                                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                                              SnackBar(
+                                                content: Text(result.message ?? 'Announcement created successfully!'),
+                                                backgroundColor: AppColors.success,
+                                              ),
+                                            );
+                                          }
                                           _loadAnnouncements();
                                         } else {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          if (parentContext.mounted) {
+                                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                                              SnackBar(
+                                                content: Text(result.error ?? 'Failed to create announcement'),
+                                                backgroundColor: AppColors.error,
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      } catch (e) {
+                                        if (parentContext.mounted) {
+                                          ScaffoldMessenger.of(parentContext).showSnackBar(
                                             SnackBar(
-                                              content: Text(result.error ?? 'Failed to create announcement'),
+                                              content: Text('Error: ${e.toString()}'),
                                               backgroundColor: AppColors.error,
                                             ),
                                           );
                                         }
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error: ${e.toString()}'),
-                                            backgroundColor: AppColors.error,
-                                          ),
-                                        );
                                       } finally {
                                         setDialogState(() {
                                           isCreating = false;
@@ -492,6 +498,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     XFile? selectedImage;
     bool isUpdating = false;
     bool removeImage = false;
+    final parentContext = context;
 
     showDialog(
       context: context,
@@ -795,29 +802,35 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                         );
 
                                         if (result.success) {
-                                       Navigator.pop(context);
-                                       ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(result.message ?? 'Announcement updated successfully!'),
-                                           backgroundColor: AppColors.success,
-                                         ),
-                                       );
+                                          if (parentContext.mounted) {
+                                            Navigator.of(parentContext).pop();
+                                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                                              SnackBar(
+                                                content: Text(result.message ?? 'Announcement updated successfully!'),
+                                                backgroundColor: AppColors.success,
+                                              ),
+                                            );
+                                          }
                                           _loadAnnouncements();
                                         } else {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          if (parentContext.mounted) {
+                                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                                              SnackBar(
+                                                content: Text(result.error ?? 'Failed to update announcement'),
+                                                backgroundColor: AppColors.error,
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      } catch (e) {
+                                        if (parentContext.mounted) {
+                                          ScaffoldMessenger.of(parentContext).showSnackBar(
                                             SnackBar(
-                                              content: Text(result.error ?? 'Failed to update announcement'),
+                                              content: Text('Error: ${e.toString()}'),
                                               backgroundColor: AppColors.error,
                                             ),
                                           );
                                         }
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error: ${e.toString()}'),
-                                            backgroundColor: AppColors.error,
-                                          ),
-                                        );
                                       } finally {
                                         setDialogState(() {
                                           isUpdating = false;
@@ -921,28 +934,34 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       );
 
       if (result.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.message ?? 'Announcement deleted successfully!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message ?? 'Announcement deleted successfully!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
         _loadAnnouncements();
       } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Failed to delete announcement'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.error ?? 'Failed to delete announcement'),
+            content: Text('Error: ${e.toString()}'),
             backgroundColor: AppColors.error,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: AppColors.error,
-        ),
-      );
     }
   }
 

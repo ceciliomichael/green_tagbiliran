@@ -86,7 +86,6 @@ class _HomeScreenState extends State<HomeScreen> {
       'Saturday',
       'Sunday',
     ];
-    final nextDate = now.add(Duration(days: daysUntil));
 
     if (daysUntil == 1) {
       return 'Tomorrow (${dayNames[nextDay]})';

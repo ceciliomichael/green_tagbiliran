@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
-import '../../constants/home_data.dart';
+import '../../models/schedule.dart';
 
 class ScheduleItemWidget extends StatelessWidget {
-  final ScheduleItem scheduleItem;
+  final Schedule scheduleItem;
 
   const ScheduleItemWidget({super.key, required this.scheduleItem});
 

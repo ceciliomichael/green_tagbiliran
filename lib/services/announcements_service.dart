@@ -407,7 +407,7 @@ class AnnouncementsService {
     }
     
     // Normalize common variations
-    switch (extension?.toLowerCase()) {
+    switch (extension.toLowerCase()) {
       case 'jpg':
       case 'jpeg':
         return 'jpeg';
@@ -416,7 +416,7 @@ class AnnouncementsService {
       case 'gif':
         return 'gif';
       default:
-        return extension?.toLowerCase() ?? 'unknown';
+        return extension.toLowerCase();
     }
   }
 
