@@ -276,7 +276,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: selectedDay,
+                        initialValue: selectedDay,
                         decoration: InputDecoration(
                           labelText: 'Collection Days',
                           border: OutlineInputBorder(
@@ -306,7 +306,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: selectedTime,
+                        initialValue: selectedTime,
                         decoration: InputDecoration(
                           labelText: 'Collection Time',
                           border: OutlineInputBorder(
@@ -344,7 +344,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
                             isActive = value;
                           });
                         },
-                        activeColor: AppColors.primaryGreen,
+                        activeThumbColor: AppColors.primaryGreen,
                       ),
                     ],
                   ),
@@ -618,7 +618,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: selectedDay,
+                        initialValue: selectedDay,
                         decoration: InputDecoration(
                           labelText: 'Collection Days',
                           border: OutlineInputBorder(
@@ -648,7 +648,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: selectedTime,
+                        initialValue: selectedTime,
                         decoration: InputDecoration(
                           labelText: 'Collection Time',
                           border: OutlineInputBorder(

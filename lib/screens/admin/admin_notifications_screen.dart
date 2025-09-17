@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
+import '../../constants/home_data.dart';
 
 class AdminNotificationsScreen extends StatefulWidget {
   const AdminNotificationsScreen({super.key});
@@ -93,17 +94,129 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
     );
   }
 
+  void _showBarangaySelector(BuildContext context, StateSetter setDialogState, FormFieldState<String> state, String? currentSelectedBarangay, Function(String?) onBarangaySelected) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        // Extract unique barangay names from HomeConstants
+        final Set<String> barangaySet = HomeConstants.garbageCollectionSchedule
+            .map((schedule) => schedule.barangay)
+            .toSet();
+        final List<String> barangayOptions = barangaySet.toList()..sort();
+
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.6,
+          decoration: const BoxDecoration(
+            color: AppColors.pureWhite,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.textSecondary.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Title
+              const Text(
+                'Select Barangay',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Tagbiliran City, Bohol',
+                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 20),
+              // Barangay list
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: barangayOptions.length,
+                  itemBuilder: (context, index) {
+                    final barangay = barangayOptions[index];
+                    final isSelected = barangay == currentSelectedBarangay;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primaryGreen.withValues(alpha: 0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.primaryGreen
+                              : AppColors.textSecondary.withValues(alpha: 0.2),
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          barangay,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? AppColors.primaryGreen
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                        trailing: isSelected
+                            ? const Icon(
+                                Icons.check_circle,
+                                color: AppColors.primaryGreen,
+                                size: 24,
+                              )
+                            : null,
+                        onTap: () {
+                          Navigator.pop(context, barangay);
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    ).then((selectedBarangay) {
+      if (selectedBarangay != null) {
+        onBarangaySelected(selectedBarangay);
+        state.didChange(selectedBarangay);
+      }
+    });
+  }
+
   void _showSendNotificationDialog() {
     final titleController = TextEditingController();
     final messageController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     String selectedTarget = 'All Users';
+    String? selectedBarangay;
 
     final List<String> targetOptions = [
       'All Users',
       'Specific Barangay',
-      'New Users',
-      'Active Users',
     ];
 
     showDialog(
@@ -191,8 +304,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                               },
                             ),
                             const SizedBox(height: 16),
-                            DropdownButtonFormField<String>(
-                              value: selectedTarget,
+                            InputDecorator(
                               decoration: InputDecoration(
                                 labelText: 'Send To',
                                 border: OutlineInputBorder(
@@ -205,21 +317,135 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                                     width: 2,
                                   ),
                                 ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
                               ),
-                              items: targetOptions.map((String target) {
-                                return DropdownMenuItem<String>(
-                                  value: target,
-                                  child: Text(target),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                if (newValue != null) {
-                                  setDialogState(() {
-                                    selectedTarget = newValue;
-                                  });
-                                }
-                              },
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: selectedTarget,
+                                  isExpanded: true,
+                                  items: targetOptions.map((String target) {
+                                    return DropdownMenuItem<String>(
+                                      value: target,
+                                      child: Text(target),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null) {
+                                      setDialogState(() {
+                                        selectedTarget = newValue;
+                                        if (newValue != 'Specific Barangay') {
+                                          selectedBarangay = null;
+                                        }
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
                             ),
+                            if (selectedTarget == 'Specific Barangay') ...[
+                              const SizedBox(height: 16),
+                                                                                            FormField<String>(
+                                 validator: (value) {
+                                   if (selectedTarget == 'Specific Barangay' && 
+                                       (selectedBarangay == null || selectedBarangay!.isEmpty)) {
+                                     return 'Please select a barangay';
+                                   }
+                                   return null;
+                                 },
+                                 builder: (FormFieldState<String> state) {
+                                   return Column(
+                                     crossAxisAlignment: CrossAxisAlignment.start,
+                                     children: [
+                                       GestureDetector(
+                                         onTap: () {
+                                           _showBarangaySelector(context, setDialogState, state, selectedBarangay, (newBarangay) {
+                                             setDialogState(() {
+                                               selectedBarangay = newBarangay;
+                                             });
+                                           });
+                                         },
+                                         child: Container(
+                                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                           decoration: BoxDecoration(
+                                             borderRadius: BorderRadius.circular(12),
+                                             color: AppColors.pureWhite,
+                                             border: Border.all(
+                                               color: state.hasError 
+                                                 ? Colors.red 
+                                                 : (selectedBarangay == null 
+                                                   ? AppColors.textSecondary.withValues(alpha: 0.3)
+                                                   : AppColors.primaryGreen),
+                                               width: selectedBarangay == null ? 1 : 2,
+                                             ),
+                                           ),
+                                           child: Row(
+                                             children: [
+                                               const Icon(
+                                                 Icons.location_on_outlined,
+                                                 color: AppColors.textSecondary,
+                                                 size: 20,
+                                               ),
+                                               const SizedBox(width: 12),
+                                               Expanded(
+                                                 child: Column(
+                                                   crossAxisAlignment: CrossAxisAlignment.start,
+                                                   children: [
+                                                     const Text(
+                                                       'Select Barangay',
+                                                       style: TextStyle(
+                                                         color: AppColors.textSecondary,
+                                                         fontSize: 14,
+                                                       ),
+                                                     ),
+                                                     if (selectedBarangay != null) ...[
+                                                       const SizedBox(height: 4),
+                                                       Text(
+                                                         selectedBarangay!,
+                                                         style: const TextStyle(
+                                                           color: AppColors.textPrimary,
+                                                           fontSize: 16,
+                                                           fontWeight: FontWeight.w500,
+                                                         ),
+                                                       ),
+                                                     ],
+                                                   ],
+                                                 ),
+                                               ),
+                                               Container(
+                                                 padding: const EdgeInsets.all(6),
+                                                 decoration: BoxDecoration(
+                                                   color: AppColors.textSecondary.withValues(alpha: 0.1),
+                                                   borderRadius: BorderRadius.circular(6),
+                                                 ),
+                                                 child: const Icon(
+                                                   Icons.keyboard_arrow_down,
+                                                   color: AppColors.textSecondary,
+                                                   size: 16,
+                                                 ),
+                                               ),
+                                             ],
+                                           ),
+                                         ),
+                                       ),
+                                       if (state.hasError)
+                                         Padding(
+                                           padding: const EdgeInsets.only(top: 5, left: 12),
+                                           child: Text(
+                                             state.errorText!,
+                                             style: const TextStyle(
+                                               color: Colors.red,
+                                               fontSize: 12,
+                                             ),
+                                           ),
+                                         ),
+                                     ],
+                                   );
+                                 },
+                               ),
+                            ],
                             const SizedBox(height: 24),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
@@ -237,15 +463,17 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                                 ElevatedButton(
                                   onPressed: () {
                                     if (formKey.currentState!.validate()) {
-                                      // TODO: Implement notification sending logic
                                       Navigator.pop(context);
+                                      
+                                      String targetMessage = selectedTarget == 'Specific Barangay' 
+                                          ? 'Notification sent to $selectedBarangay successfully!'
+                                          : 'Notification sent to all users successfully!';
+                                      
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Notification sent successfully!',
-                                          ),
+                                        SnackBar(
+                                          content: Text(targetMessage),
                                           backgroundColor: AppColors.success,
                                         ),
                                       );

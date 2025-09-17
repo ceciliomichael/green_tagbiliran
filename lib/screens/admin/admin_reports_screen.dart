@@ -732,7 +732,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           DropdownButtonFormField<String>(
-                            value: selectedStatus,
+                            initialValue: selectedStatus,
                             decoration: InputDecoration(
                               labelText: 'New Status',
                               border: OutlineInputBorder(

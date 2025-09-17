@@ -1,5 +1,4 @@
 class SupabaseConfig {
-  // TODO: Replace these with your actual Supabase project credentials
   // Get these from your Supabase project settings
   static const String url = 'https://wvpcosfglhanrzugelrv.supabase.co';
   static const String anonKey =
@@ -12,6 +11,7 @@ class SupabaseConfig {
   static const String registerUserEndpoint = '$baseApiUrl/register_user';
   static const String loginUserEndpoint = '$baseApiUrl/login_user';
   static const String getUserProfileEndpoint = '$baseApiUrl/get_user_profile';
+  static const String updateUserProfileEndpoint = '$baseApiUrl/update_user_profile';
   static const String createTruckDriverEndpoint = '$baseApiUrl/create_truck_driver';
 
   // Truck driver management endpoints

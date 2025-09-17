@@ -313,6 +313,76 @@ class AuthService {
     }
   }
 
+  // Update user profile
+  Future<AuthResult> updateUserProfile({
+    required String firstName,
+    required String lastName,
+    required String barangay,
+  }) async {
+    if (_currentUser == null) {
+      return AuthResult(success: false, error: 'No user logged in');
+    }
+
+    try {
+      // Validate input
+      if (firstName.trim().isEmpty || lastName.trim().isEmpty) {
+        return AuthResult(
+          success: false,
+          error: 'First name and last name are required',
+        );
+      }
+
+      // Prepare request body
+      final requestBody = {
+        'p_user_id': _currentUser!.id,
+        'p_first_name': firstName.trim(),
+        'p_last_name': lastName.trim(),
+        'p_barangay': barangay,
+      };
+
+      // Make HTTP request to update profile function
+      final response = await http.post(
+        Uri.parse(SupabaseConfig.updateUserProfileEndpoint),
+        headers: SupabaseConfig.headers,
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          // Update local user data
+          final userData = responseData['user'];
+          final updatedUser = User.fromJson(userData);
+          
+          _currentUser = updatedUser;
+          await _storeSession(_currentUser!);
+
+          return AuthResult(
+            success: true,
+            user: updatedUser,
+            message: responseData['message'] ?? 'Profile updated successfully',
+          );
+        } else {
+          return AuthResult(
+            success: false,
+            error: responseData['error'] ?? 'Failed to update profile',
+          );
+        }
+      } else {
+        return AuthResult(
+          success: false,
+          error: 'Network error: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return AuthResult(
+        success: false,
+        error: 'Failed to update profile: ${e.toString()}',
+      );
+    }
+  }
+
   // Store user session locally
   Future<void> _storeSession(User user) async {
     try {

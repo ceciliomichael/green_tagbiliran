@@ -1175,7 +1175,7 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
                   
                   // Barangay Dropdown
                   DropdownButtonFormField<String>(
-                    value: editSelectedBarangay,
+                    initialValue: editSelectedBarangay,
                     decoration: const InputDecoration(
                       labelText: 'Barangay Assignment',
                       border: OutlineInputBorder(),

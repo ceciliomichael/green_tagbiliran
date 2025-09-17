@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../constants/colors.dart';
 import '../../constants/routes.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/common/edit_name_dialog.dart';
+import '../../widgets/common/edit_barangay_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -446,6 +447,119 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
+  void _showEditNameDialog() {
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => EditNameDialog(
+        firstName: user.firstName,
+        lastName: user.lastName,
+        onSave: _updateUserName,
+      ),
+    );
+  }
+
+  void _showEditBarangayDialog() {
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => EditBarangayDialog(
+        currentBarangay: user.barangay,
+        onSave: _updateUserBarangay,
+      ),
+    );
+  }
+
+  Future<void> _updateUserName(String firstName, String lastName) async {
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    try {
+      final result = await _authService.updateUserProfile(
+        firstName: firstName,
+        lastName: lastName,
+        barangay: user.barangay,
+      );
+
+      if (result.success) {
+        setState(() {});
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message ?? 'Name updated successfully'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Failed to update name'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating name: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateUserBarangay(String barangay) async {
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    try {
+      final result = await _authService.updateUserProfile(
+        firstName: user.firstName,
+        lastName: user.lastName,
+        barangay: barangay,
+      );
+
+      if (result.success) {
+        setState(() {});
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message ?? 'Barangay updated successfully'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Failed to update barangay'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating barangay: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = _authService.currentUser;
@@ -482,21 +596,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
               tooltip: 'Refresh Profile',
             ),
-          IconButton(
-            onPressed: () {
-              // Copy user ID to clipboard
-              if (user?.id != null) {
-                Clipboard.setData(ClipboardData(text: user!.id));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('User ID copied to clipboard'),
-                    backgroundColor: AppColors.primaryGreen,
-                  ),
-                );
-              }
-            },
-            icon: const Icon(Icons.copy, color: AppColors.textSecondary),
-          ),
         ],
       ),
       body: RefreshIndicator(
@@ -534,6 +633,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: 'Full Name',
                 value: user?.fullName ?? 'N/A',
                 icon: Icons.person_outline,
+                onTap: _showEditNameDialog,
               ),
 
               _buildInfoCard(
@@ -546,29 +646,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: 'Barangay',
                 value: user?.barangay ?? 'N/A',
                 icon: Icons.location_city_outlined,
+                onTap: _showEditBarangayDialog,
               ),
 
               _buildInfoCard(
                 title: 'Member Since',
                 value: _formatDate(user?.createdAt),
                 icon: Icons.calendar_today_outlined,
-              ),
-
-              _buildInfoCard(
-                title: 'User ID',
-                value: user?.id ?? 'N/A',
-                icon: Icons.fingerprint,
-                onTap: () {
-                  if (user?.id != null) {
-                    Clipboard.setData(ClipboardData(text: user!.id));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('User ID copied to clipboard'),
-                        backgroundColor: AppColors.primaryGreen,
-                      ),
-                    );
-                  }
-                },
               ),
 
               const SizedBox(height: 32),
@@ -597,19 +681,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.assignment_outlined,
                 onTap: () {
                   Navigator.pushNamed(context, AppRoutes.issueStatus);
-                },
-              ),
-
-              _buildActionButton(
-                title: 'Settings',
-                icon: Icons.settings_outlined,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Settings screen coming soon!'),
-                      backgroundColor: AppColors.primaryGreen,
-                    ),
-                  );
                 },
               ),
 
