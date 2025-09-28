@@ -1237,7 +1237,7 @@ class _AdminReportDetailScreenState extends State<AdminReportDetailScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Images showing how your issue was resolved',
+                      'Response Images Attached',
                       style: TextStyle(
                         fontSize: 16,
                         color: AppColors.textPrimary,
