@@ -1,8 +1,8 @@
-# Database Design - Green Tagbiliran Waste Management System
+# Database Design - Green Tagbilaran Waste Management System
 
 ## Overview
 
-The Green Tagbiliran database is designed to support a comprehensive waste management system for Tagbiliran City, Bohol. The system uses PostgreSQL with Supabase as the backend, implementing Row Level Security (RLS) policies and custom functions for secure data operations.
+The Green Tagbilaran database is designed to support a comprehensive waste management system for Tagbilaran City, Bohol. The system uses PostgreSQL with Supabase as the backend, implementing Row Level Security (RLS) policies and custom functions for secure data operations.
 
 ## Database Architecture
 
@@ -26,14 +26,14 @@ The Green Tagbiliran database is designed to support a comprehensive waste manag
 | `last_name` | VARCHAR(100) | NOT NULL | User's last name |
 | `phone` | VARCHAR(20) | UNIQUE, NOT NULL | Philippine phone number format (+63XXXXXXXXXX) |
 | `password_hash` | TEXT | NOT NULL | Bcrypt hashed password |
-| `barangay` | VARCHAR(50) | NOT NULL | User's barangay (validated against 15 Tagbiliran City barangays) |
+| `barangay` | VARCHAR(50) | NOT NULL | User's barangay (validated against 15 Tagbilaran City barangays) |
 | `user_role` | VARCHAR(20) | DEFAULT 'user', NOT NULL | User role: 'user', 'admin', or 'truck_driver' |
 | `created_at` | TIMESTAMP WITH TIME ZONE | DEFAULT now() | Account creation timestamp |
 | `updated_at` | TIMESTAMP WITH TIME ZONE | DEFAULT now() | Last update timestamp |
 
 **Constraints:**
 - `users_phone_format`: Phone number must match Philippine format (`^\+63[0-9]{10}$`)
-- `users_barangay_valid`: Barangay must be one of the 15 valid Tagbiliran City barangays
+- `users_barangay_valid`: Barangay must be one of the 15 valid Tagbilaran City barangays
 - `users_role_valid`: Role must be 'user', 'admin', or 'truck_driver'
 
 **Indexes:**
@@ -63,7 +63,7 @@ The Green Tagbiliran database is designed to support a comprehensive waste manag
 
 **Constraints:**
 - `reports_status_valid`: Status must be 'pending', 'in_progress', 'resolved', or 'rejected'
-- `reports_barangay_valid`: Barangay must be one of the 15 valid Tagbiliran City barangays
+- `reports_barangay_valid`: Barangay must be one of the 15 valid Tagbilaran City barangays
 
 **Indexes:**
 - `idx_reports_user_id` on user_id
@@ -142,7 +142,7 @@ The Green Tagbiliran database is designed to support a comprehensive waste manag
 
 ## Valid Barangays
 
-The system supports the following 15 barangays of Tagbiliran City:
+The system supports the following 15 barangays of Tagbilaran City:
 
 1. Bool
 2. Booy

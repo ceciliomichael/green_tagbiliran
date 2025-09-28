@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../constants/supabase_config.dart';
+import 'notifications_service.dart';
 
 class AuthResult {
   final bool success;
@@ -156,13 +157,17 @@ class AuthService {
 
         if (responseData['success'] == true) {
           return AuthResult(
-            success: true, 
-            message: responseData['message'] ?? 'Truck driver account created successfully',
+            success: true,
+            message:
+                responseData['message'] ??
+                'Truck driver account created successfully',
           );
         } else {
           return AuthResult(
             success: false,
-            error: responseData['error'] ?? 'Failed to create truck driver account',
+            error:
+                responseData['error'] ??
+                'Failed to create truck driver account',
           );
         }
       } else {
@@ -244,6 +249,10 @@ class AuthService {
       await prefs.remove(_userKey);
       await prefs.remove(_tokenKey);
       _currentUser = null;
+
+      // Clear notification data
+      final notificationsService = NotificationsService();
+      notificationsService.clearLocalData();
     } catch (e) {
       // Handle error silently for logout
     }
@@ -318,6 +327,7 @@ class AuthService {
     required String firstName,
     required String lastName,
     required String barangay,
+    String? phone,
   }) async {
     if (_currentUser == null) {
       return AuthResult(success: false, error: 'No user logged in');
@@ -338,6 +348,7 @@ class AuthService {
         'p_first_name': firstName.trim(),
         'p_last_name': lastName.trim(),
         'p_barangay': barangay,
+        if (phone != null) 'p_phone': phone.trim(),
       };
 
       // Make HTTP request to update profile function
@@ -354,7 +365,7 @@ class AuthService {
           // Update local user data
           final userData = responseData['user'];
           final updatedUser = User.fromJson(userData);
-          
+
           _currentUser = updatedUser;
           await _storeSession(_currentUser!);
 
@@ -505,7 +516,8 @@ class AuthService {
         if (responseData['success'] == true) {
           return AuthResult(
             success: true,
-            message: responseData['message'] ?? 'Truck driver updated successfully',
+            message:
+                responseData['message'] ?? 'Truck driver updated successfully',
           );
         } else {
           return AuthResult(
@@ -582,9 +594,7 @@ class AuthService {
   // Delete truck driver
   Future<AuthResult> deleteTruckDriver(String driverId) async {
     try {
-      final requestBody = {
-        'p_driver_id': driverId,
-      };
+      final requestBody = {'p_driver_id': driverId};
 
       final response = await http.post(
         Uri.parse(SupabaseConfig.deleteTruckDriverEndpoint),
@@ -598,7 +608,8 @@ class AuthService {
         if (responseData['success'] == true) {
           return AuthResult(
             success: true,
-            message: responseData['message'] ?? 'Truck driver deleted successfully',
+            message:
+                responseData['message'] ?? 'Truck driver deleted successfully',
           );
         } else {
           return AuthResult(

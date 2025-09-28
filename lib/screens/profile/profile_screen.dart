@@ -4,6 +4,7 @@ import '../../constants/routes.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/common/edit_name_dialog.dart';
 import '../../widgets/common/edit_barangay_dialog.dart';
+import '../../widgets/common/edit_phone_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -474,6 +475,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _showEditPhoneDialog() {
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) =>
+          EditPhoneDialog(currentPhone: user.phone, onSave: _updateUserPhone),
+    );
+  }
+
   Future<void> _updateUserName(String firstName, String lastName) async {
     final user = _authService.currentUser;
     if (user == null) return;
@@ -553,6 +565,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error updating barangay: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateUserPhone(String phone) async {
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    try {
+      final result = await _authService.updateUserProfile(
+        firstName: user.firstName,
+        lastName: user.lastName,
+        barangay: user.barangay,
+        phone: phone,
+      );
+
+      if (result.success) {
+        setState(() {});
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                result.message ?? 'Phone number updated successfully',
+              ),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Failed to update phone number'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating phone number: ${e.toString()}'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -640,6 +698,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: 'Phone Number',
                 value: user?.phone ?? 'N/A',
                 icon: Icons.phone_outlined,
+                onTap: _showEditPhoneDialog,
               ),
 
               _buildInfoCard(
@@ -688,12 +747,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: 'Help & Support',
                 icon: Icons.help_outline,
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Help & Support coming soon!'),
-                      backgroundColor: AppColors.primaryGreen,
-                    ),
-                  );
+                  Navigator.pushNamed(context, AppRoutes.helpSupport);
                 },
               ),
 

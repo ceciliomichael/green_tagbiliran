@@ -1,5 +1,5 @@
 -- =============================================
--- Green Tagbiliran - Schedules Schema (Fixed)
+-- Green Tagbilaran - Schedules Schema (Fixed)
 -- =============================================
 -- This version works whether or not user_role column exists
 

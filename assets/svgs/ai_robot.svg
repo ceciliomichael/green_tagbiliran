@@ -1,0 +1,26 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Robot Head -->
+  <rect x="20" y="25" width="50" height="50" rx="12" ry="12" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2"/>
+  
+  <!-- Robot Eyes -->
+  <circle cx="35" cy="45" r="6" fill="#ffffff"/>
+  <circle cx="55" cy="45" r="6" fill="#ffffff"/>
+  <circle cx="35" cy="45" r="3" fill="#2c5aa0"/>
+  <circle cx="55" cy="45" r="3" fill="#2c5aa0"/>
+  
+  <!-- Robot Mouth -->
+  <rect x="38" y="58" width="14" height="8" rx="4" ry="4" fill="#2c5aa0"/>
+  
+  <!-- Small antenna -->
+  <line x1="45" y1="25" x2="45" y2="18" stroke="#2c5aa0" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="45" cy="16" r="2" fill="#e74c3c"/>
+  
+  <!-- Leaf attached to the side -->
+  <path d="M 72 35 Q 85 30, 88 42 Q 85 52, 76 50 Q 72 45, 72 35 Z" fill="#27ae60" stroke="#1e8449" stroke-width="1"/>
+  
+  <!-- Leaf vein -->
+  <path d="M 74 38 Q 80 40, 83 48" stroke="#1e8449" stroke-width="1" fill="none"/>
+  
+  <!-- Connection from robot head to leaf -->
+  <line x1="70" y1="42" x2="72" y2="40" stroke="#7f8c8d" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -12,6 +12,7 @@ class ReportsResult {
   final List<Report>? reports;
   final Report? report;
   final List<ReportImage>? images;
+  final List<AdminResponseImage>? adminResponseImages;
   final String? message;
   final int? totalCount;
 
@@ -21,6 +22,7 @@ class ReportsResult {
     this.reports,
     this.report,
     this.images,
+    this.adminResponseImages,
     this.message,
     this.totalCount,
   });
@@ -340,6 +342,134 @@ class ReportsService {
       return ReportsResult(
         success: false,
         error: 'Failed to get user reports: ${e.toString()}',
+      );
+    }
+  }
+
+  // Update report status with admin response images (admin only)
+  Future<ReportsResult> updateReportStatusWithImages({
+    required String adminId,
+    required String reportId,
+    required String status,
+    String? adminNotes,
+    List<XFile>? images,
+    String? adminName,
+  }) async {
+    try {
+      List<Map<String, dynamic>> imageDataList = [];
+
+      // Convert images to base64 if provided
+      if (images != null && images.isNotEmpty) {
+        for (final image in images) {
+          final bytes = await image.readAsBytes();
+          final imageData = base64Encode(bytes);
+          final imageType = _getImageType(image.path);
+          final fileSize = bytes.length;
+
+          imageDataList.add({
+            'image_data': imageData,
+            'image_type': imageType,
+            'file_size': fileSize,
+          });
+        }
+      }
+
+      final requestBody = {
+        'p_admin_id': adminId,
+        'p_report_id': reportId,
+        'p_status': status,
+        if (adminNotes != null) 'p_admin_notes': adminNotes,
+        if (imageDataList.isNotEmpty) 'p_images': imageDataList,
+        if (adminName != null && adminName.trim().isNotEmpty)
+          'p_admin_name': adminName.trim(),
+      };
+
+      final response = await http.post(
+        Uri.parse(SupabaseConfig.updateReportStatusWithImagesEndpoint),
+        headers: SupabaseConfig.headers,
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          return ReportsResult(success: true, message: responseData['message']);
+        } else {
+          return ReportsResult(
+            success: false,
+            error: responseData['error'] ?? 'Failed to update report',
+          );
+        }
+      } else {
+        return ReportsResult(
+          success: false,
+          error: 'Network error: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return ReportsResult(
+        success: false,
+        error: 'Failed to update report: ${e.toString()}',
+      );
+    }
+  }
+
+  // Get admin response images for a report
+  Future<ReportsResult> getAdminResponseImages({
+    required String userId,
+    required String reportId,
+  }) async {
+    try {
+      final requestBody = {'p_user_id': userId, 'p_report_id': reportId};
+
+      final response = await http.post(
+        Uri.parse(SupabaseConfig.getAdminResponseImagesEndpoint),
+        headers: SupabaseConfig.headers,
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          final imagesJson = responseData['images'] as List<dynamic>?;
+          final images = <AdminResponseImage>[];
+
+          if (imagesJson != null) {
+            for (final imageJson in imagesJson) {
+              try {
+                if (imageJson is Map<String, dynamic>) {
+                  final image = AdminResponseImage.fromJson(imageJson);
+                  images.add(image);
+                }
+              } catch (e) {
+                debugPrint('Error parsing admin response image: $e');
+                debugPrint('Image JSON: $imageJson');
+                // Skip this image and continue with others
+                continue;
+              }
+            }
+          }
+
+          return ReportsResult(success: true, adminResponseImages: images);
+        } else {
+          return ReportsResult(
+            success: false,
+            error:
+                responseData['error'] ?? 'Failed to get admin response images',
+          );
+        }
+      } else {
+        return ReportsResult(
+          success: false,
+          error: 'Network error: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return ReportsResult(
+        success: false,
+        error: 'Failed to get admin response images: ${e.toString()}',
       );
     }
   }

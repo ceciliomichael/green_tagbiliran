@@ -1,4 +1,4 @@
--- User Statistics Functions for Green Tagbiliran Admin Dashboard
+-- User Statistics Functions for Green Tagbilaran Admin Dashboard
 
 -- Function to get comprehensive user statistics
 CREATE OR REPLACE FUNCTION public.get_user_statistics(

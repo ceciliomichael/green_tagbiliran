@@ -6,6 +6,7 @@ class AppRoutes {
   static const String main = '/main';
   static const String reportIssue = '/report-issue';
   static const String issueStatus = '/issue-status';
+  static const String helpSupport = '/help-support';
   static const String schedule = '/schedule';
   static const String events = '/events';
   static const String notifications = '/notifications';

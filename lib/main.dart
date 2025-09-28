@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -18,6 +19,7 @@ import 'screens/admin/admin_users_screen.dart';
 import 'screens/admin/admin_notifications_screen.dart';
 import 'screens/admin/admin_truck_drivers_screen.dart';
 import 'screens/driver/truck_driver_main_screen.dart';
+import 'screens/profile/help_support_screen.dart';
 import 'constants/routes.dart';
 import 'constants/colors.dart';
 import 'services/auth_service.dart';
@@ -41,10 +43,11 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.green,
-        fontFamily: 'Inter',
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: AppColors.textPrimary),
-          bodyMedium: TextStyle(color: AppColors.textPrimary),
+        textTheme: GoogleFonts.interTextTheme(
+          Theme.of(context).textTheme.copyWith(
+            bodyLarge: const TextStyle(color: AppColors.textPrimary),
+            bodyMedium: const TextStyle(color: AppColors.textPrimary),
+          ),
         ),
       ),
       initialRoute: AppRoutes.splash,
@@ -56,6 +59,7 @@ class MainApp extends StatelessWidget {
         AppRoutes.main: (context) => const MainScreen(),
         AppRoutes.reportIssue: (context) => const ReportIssueScreen(),
         AppRoutes.issueStatus: (context) => const IssueStatusScreen(),
+        AppRoutes.helpSupport: (context) => const HelpSupportScreen(),
         AppRoutes.schedule: (context) => const ScheduleScreen(),
         AppRoutes.events: (context) => const EventsScreen(),
         AppRoutes.notifications: (context) => const NotificationsScreen(),

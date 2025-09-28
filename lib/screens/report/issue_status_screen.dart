@@ -4,6 +4,7 @@ import '../../services/reports_service.dart';
 import '../../services/auth_service.dart';
 import '../../models/report.dart';
 import '../../widgets/common/loading_indicator.dart';
+import 'user_report_detail_screen.dart';
 
 class IssueStatusScreen extends StatefulWidget {
   const IssueStatusScreen({super.key});
@@ -116,122 +117,139 @@ class _IssueStatusScreenState extends State<IssueStatusScreen> {
   }
 
   Widget _buildReportCard(Report report) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowDark.withValues(alpha: 0.1),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-            spreadRadius: 2,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => UserReportDetailScreen(report: report),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Report #${report.id.substring(0, 8)}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                _buildStatusBadge(report.status),
-              ],
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: AppColors.pureWhite,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowDark.withValues(alpha: 0.1),
+              offset: const Offset(0, 4),
+              blurRadius: 12,
+              spreadRadius: 2,
             ),
-            const SizedBox(height: 12),
-            Text(
-              report.issueDescription,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textPrimary,
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Report #${report.id.substring(0, 8)}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  _buildStatusBadge(report.status),
+                ],
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  size: 16,
-                  color: AppColors.textSecondary,
+              const SizedBox(height: 12),
+              Text(
+                report.issueDescription,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  report.barangay,
-                  style: const TextStyle(
-                    fontSize: 12,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
                     color: AppColors.textSecondary,
                   ),
-                ),
-                const SizedBox(width: 16),
-                const Icon(
-                  Icons.access_time,
-                  size: 16,
-                  color: AppColors.textSecondary,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  _formatDate(report.createdAt),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
+                  const SizedBox(width: 4),
+                  Text(
+                    report.barangay,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
-                if (report.hasImage) ...[
                   const SizedBox(width: 16),
                   const Icon(
-                    Icons.image_outlined,
+                    Icons.access_time,
                     size: 16,
-                    color: AppColors.primaryGreen,
+                    color: AppColors.textSecondary,
                   ),
-                ],
-              ],
-            ),
-            if (report.adminNotes != null && report.adminNotes!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Admin Response:',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryGreen,
-                      ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatDate(report.createdAt),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      report.adminNotes!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textPrimary,
-                      ),
+                  ),
+                  if (report.hasImage) ...[
+                    const SizedBox(width: 16),
+                    const Icon(
+                      Icons.image_outlined,
+                      size: 16,
+                      color: AppColors.primaryGreen,
                     ),
                   ],
-                ),
+                  const Spacer(),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
               ),
+              if (report.adminNotes != null &&
+                  report.adminNotes!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Admin Response:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        report.adminNotes!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

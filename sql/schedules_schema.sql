@@ -1,5 +1,5 @@
 -- =============================================
--- Green Tagbiliran - Schedules Schema
+-- Green Tagbilaran - Schedules Schema
 -- =============================================
 
 -- Create schedules table

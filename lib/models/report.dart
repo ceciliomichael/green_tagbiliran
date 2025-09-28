@@ -12,6 +12,7 @@ class Report {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool hasImage;
+  final bool hasAdminResponseImage;
 
   Report({
     required this.id,
@@ -25,6 +26,7 @@ class Report {
     required this.createdAt,
     required this.updatedAt,
     this.hasImage = false,
+    this.hasAdminResponseImage = false,
   });
 
   // Create Report from JSON
@@ -41,6 +43,7 @@ class Report {
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       hasImage: json['has_image'] as bool? ?? false,
+      hasAdminResponseImage: json['has_admin_response_image'] as bool? ?? false,
     );
   }
 
@@ -74,6 +77,7 @@ class Report {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'has_image': hasImage,
+      'has_admin_response_image': hasAdminResponseImage,
     };
   }
 
@@ -118,6 +122,7 @@ class Report {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? hasImage,
+    bool? hasAdminResponseImage,
   }) {
     return Report(
       id: id ?? this.id,
@@ -131,6 +136,8 @@ class Report {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       hasImage: hasImage ?? this.hasImage,
+      hasAdminResponseImage:
+          hasAdminResponseImage ?? this.hasAdminResponseImage,
     );
   }
 
@@ -203,6 +210,74 @@ class ReportImage {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is ReportImage && other.id == id;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode;
+  }
+}
+
+class AdminResponseImage {
+  final String id;
+  final String reportId;
+  final String adminId;
+  final String imageData; // Base64 encoded image
+  final String imageType;
+  final int? fileSize;
+  final DateTime createdAt;
+  final String? adminName;
+
+  AdminResponseImage({
+    required this.id,
+    required this.reportId,
+    required this.adminId,
+    required this.imageData,
+    required this.imageType,
+    this.fileSize,
+    required this.createdAt,
+    this.adminName,
+  });
+
+  // Create AdminResponseImage from JSON
+  factory AdminResponseImage.fromJson(Map<String, dynamic> json) {
+    return AdminResponseImage(
+      id: json['id']?.toString() ?? '',
+      reportId: json['report_id']?.toString() ?? '',
+      adminId: json['admin_id']?.toString() ?? '',
+      imageData: json['image_data']?.toString() ?? '',
+      imageType: json['image_type']?.toString() ?? 'jpeg',
+      fileSize: json['file_size'] as int?,
+      createdAt:
+          DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      adminName: json['admin_name']?.toString(),
+    );
+  }
+
+  // Convert AdminResponseImage to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'report_id': reportId,
+      'admin_id': adminId,
+      'image_data': imageData,
+      'image_type': imageType,
+      'file_size': fileSize,
+      'created_at': createdAt.toIso8601String(),
+      'admin_name': adminName,
+    };
+  }
+
+  @override
+  String toString() {
+    return 'AdminResponseImage{id: $id, reportId: $reportId, adminId: $adminId, imageType: $imageType}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is AdminResponseImage && other.id == id;
   }
 
   @override

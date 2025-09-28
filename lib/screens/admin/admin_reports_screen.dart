@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
 import '../../constants/colors.dart';
 import '../../services/reports_service.dart';
 import '../../services/auth_service.dart';
@@ -688,53 +690,55 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
   }
 
   void _showStatusUpdateDialog(Report report) {
-    String? selectedStatus;
+    // Set initial status to current report status
+    String? selectedStatus = report.status.toString().split('.').last;
+    if (selectedStatus == 'inProgress') selectedStatus = 'in_progress';
+
     final notesController = TextEditingController(
       text: report.adminNotes ?? '',
     );
+    final adminNameController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    List<XFile> selectedImages = [];
+    final imagePicker = ImagePicker();
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            backgroundColor: AppColors.pureWhite,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            contentPadding: EdgeInsets.zero,
-            insetPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 40,
-            ),
-            content: Container(
-              width: double.maxFinite,
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Update Report Status',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.pureWhite,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Text(
+                'Update Report Status',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 500,
+                    maxHeight: 650,
                   ),
-                  const SizedBox(height: 24),
-                  Form(
+                  child: Form(
                     key: formKey,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           DropdownButtonFormField<String>(
                             initialValue: selectedStatus,
                             decoration: InputDecoration(
-                              labelText: 'New Status',
+                              labelText: 'Report Status',
+                              hintText: 'Select new status',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -746,8 +750,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                 ),
                               ),
                             ),
-                            hint: const Text('Select new status'),
-                            items: [
+                            items: const [
                               DropdownMenuItem(
                                 value: 'pending',
                                 child: Text('Pending'),
@@ -765,10 +768,12 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                 child: Text('Rejected'),
                               ),
                             ],
-                            onChanged: (value) {
-                              setDialogState(() {
-                                selectedStatus = value;
-                              });
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                setDialogState(() {
+                                  selectedStatus = newValue;
+                                });
+                              }
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -780,9 +785,9 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: notesController,
-                            maxLines: 3,
                             decoration: InputDecoration(
                               labelText: 'Admin Notes',
+                              hintText: 'Add notes for the user...',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -794,71 +799,400 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                 ),
                               ),
                             ),
+                            maxLines: 4,
+                            maxLength: 500,
                           ),
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text(
-                                  'Cancel',
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: adminNameController,
+                            decoration: InputDecoration(
+                              labelText: 'Your Name (Optional)',
+                              hintText:
+                                  'Enter your name so the user knows who resolved their issue...',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: AppColors.primaryGreen,
+                                  width: 2,
+                                ),
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.person_outline,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                            maxLength: 100,
+                            validator: (value) {
+                              if (value != null &&
+                                  value.trim().isNotEmpty &&
+                                  value.trim().length < 2) {
+                                return 'Name must be at least 2 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: AppColors.textSecondary.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.attach_file,
+                                      color: AppColors.primaryGreen,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Expanded(
+                                      child: Text(
+                                        'Attach Response Images (Optional)',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Add up to 3 images to show the user how the issue was resolved',
                                   style: TextStyle(
+                                    fontSize: 12,
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              ElevatedButton(
-                                onPressed: () {
-                                  if (formKey.currentState!.validate()) {
-                                    ReportStatus newStatus;
-                                    switch (selectedStatus) {
-                                      case 'pending':
-                                        newStatus = ReportStatus.pending;
-                                        break;
-                                      case 'in_progress':
-                                        newStatus = ReportStatus.inProgress;
-                                        break;
-                                      case 'resolved':
-                                        newStatus = ReportStatus.resolved;
-                                        break;
-                                      case 'rejected':
-                                        newStatus = ReportStatus.rejected;
-                                        break;
-                                      default:
-                                        return;
-                                    }
-                                    Navigator.pop(context);
-                                    _updateReportStatus(
-                                      report,
-                                      newStatus,
-                                      notesController.text.trim(),
-                                    );
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primaryGreen,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                const SizedBox(height: 12),
+                                if (selectedImages.isEmpty)
+                                  GestureDetector(
+                                    onTap: () async {
+                                      try {
+                                        final images = await imagePicker
+                                            .pickMultiImage(imageQuality: 70);
+                                        if (images.isNotEmpty) {
+                                          // Limit to 3 images
+                                          final limitedImages = images
+                                              .take(3)
+                                              .toList();
+                                          setDialogState(() {
+                                            selectedImages = limitedImages;
+                                          });
+                                        }
+                                      } catch (e) {
+                                        if (!context.mounted) return;
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Failed to select images: ${e.toString()}',
+                                            ),
+                                            backgroundColor: AppColors.error,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      height: 80,
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryGreen
+                                            .withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: AppColors.primaryGreen
+                                              .withValues(alpha: 0.3),
+                                          style: BorderStyle.solid,
+                                        ),
+                                      ),
+                                      child: const Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.add_photo_alternate_outlined,
+                                            color: AppColors.primaryGreen,
+                                            size: 32,
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'Tap to select images',
+                                            style: TextStyle(
+                                              color: AppColors.primaryGreen,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Column(
+                                    children: [
+                                      SizedBox(
+                                        height: 80,
+                                        child: ListView.builder(
+                                          scrollDirection: Axis.horizontal,
+                                          itemCount: selectedImages.length,
+                                          itemBuilder: (context, index) {
+                                            return Container(
+                                              margin: EdgeInsets.only(
+                                                right:
+                                                    index <
+                                                        selectedImages.length -
+                                                            1
+                                                    ? 8
+                                                    : 0,
+                                              ),
+                                              child: Stack(
+                                                children: [
+                                                  Container(
+                                                    width: 80,
+                                                    height: 80,
+                                                    decoration: BoxDecoration(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: AppColors
+                                                            .primaryGreen
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                    child: ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            7,
+                                                          ),
+                                                      child: FutureBuilder<Uint8List>(
+                                                        future:
+                                                            selectedImages[index]
+                                                                .readAsBytes(),
+                                                        builder: (context, snapshot) {
+                                                          if (snapshot
+                                                              .hasData) {
+                                                            return Image.memory(
+                                                              snapshot.data!,
+                                                              fit: BoxFit.cover,
+                                                            );
+                                                          }
+                                                          return const Center(
+                                                            child:
+                                                                CircularProgressIndicator(
+                                                                  strokeWidth:
+                                                                      2,
+                                                                ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    top: 4,
+                                                    right: 4,
+                                                    child: GestureDetector(
+                                                      onTap: () {
+                                                        setDialogState(() {
+                                                          selectedImages
+                                                              .removeAt(index);
+                                                        });
+                                                      },
+                                                      child: Container(
+                                                        width: 20,
+                                                        height: 20,
+                                                        decoration:
+                                                            const BoxDecoration(
+                                                              color: AppColors
+                                                                  .error,
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                            ),
+                                                        child: const Icon(
+                                                          Icons.close,
+                                                          color: Colors.white,
+                                                          size: 14,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      if (selectedImages.length < 3)
+                                        GestureDetector(
+                                          onTap: () async {
+                                            try {
+                                              final remainingSlots =
+                                                  3 - selectedImages.length;
+                                              final images = await imagePicker
+                                                  .pickMultiImage(
+                                                    imageQuality: 70,
+                                                  );
+                                              if (images.isNotEmpty) {
+                                                final limitedImages = images
+                                                    .take(remainingSlots)
+                                                    .toList();
+                                                setDialogState(() {
+                                                  selectedImages.addAll(
+                                                    limitedImages,
+                                                  );
+                                                });
+                                              }
+                                            } catch (e) {
+                                              if (!context.mounted) return;
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    'Failed to select images: ${e.toString()}',
+                                                  ),
+                                                  backgroundColor:
+                                                      AppColors.error,
+                                                ),
+                                              );
+                                            }
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8,
+                                              horizontal: 16,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primaryGreen
+                                                  .withValues(alpha: 0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: AppColors.primaryGreen
+                                                    .withValues(alpha: 0.3),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(
+                                                  Icons.add,
+                                                  color: AppColors.primaryGreen,
+                                                  size: 16,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  'Add more (${selectedImages.length}/3)',
+                                                  style: const TextStyle(
+                                                    color:
+                                                        AppColors.primaryGreen,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
-                                ),
-                                child: const Text('Update Status'),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          );
-        },
-      ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (formKey.currentState!.validate()) {
+                      ReportStatus newStatus;
+                      switch (selectedStatus) {
+                        case 'pending':
+                          newStatus = ReportStatus.pending;
+                          break;
+                        case 'in_progress':
+                          newStatus = ReportStatus.inProgress;
+                          break;
+                        case 'resolved':
+                          newStatus = ReportStatus.resolved;
+                          break;
+                        case 'rejected':
+                          newStatus = ReportStatus.rejected;
+                          break;
+                        default:
+                          return;
+                      }
+                      Navigator.pop(context);
+                      final currentUser = _authService.currentUser;
+                      if (currentUser != null && selectedImages.isNotEmpty) {
+                        final statusString =
+                            newStatus == ReportStatus.inProgress
+                            ? 'in_progress'
+                            : newStatus.toString().split('.').last;
+                        await _reportsService.updateReportStatusWithImages(
+                          adminId: currentUser.id,
+                          reportId: report.id,
+                          status: statusString,
+                          adminNotes: notesController.text.trim(),
+                          images: selectedImages,
+                          adminName: adminNameController.text.trim().isNotEmpty
+                              ? adminNameController.text.trim()
+                              : null,
+                        );
+                        _loadReports();
+                      } else {
+                        _updateReportStatus(
+                          report,
+                          newStatus,
+                          notesController.text.trim(),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Update Status'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

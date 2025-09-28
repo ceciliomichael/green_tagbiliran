@@ -4,6 +4,11 @@ import '../home/home_screen.dart';
 import '../track/track_screen.dart';
 import '../recycle/recycle_screen.dart';
 import '../profile/profile_screen.dart';
+import '../../services/notifications_service.dart';
+import '../../services/auth_service.dart';
+import '../../services/notification_overlay_service.dart';
+import '../../widgets/ui/floating_ai_button.dart';
+import '../../widgets/ui/ai_chat_overlay.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -14,6 +19,34 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  final NotificationsService _notificationsService = NotificationsService();
+  final AuthService _authService = AuthService();
+  final NotificationOverlayService _overlayService =
+      NotificationOverlayService();
+  bool _showAiChat = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Set context for overlay service after first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _overlayService.setContext(context);
+    });
+    _startNotificationPolling();
+  }
+
+  @override
+  void dispose() {
+    _notificationsService.stopPolling();
+    _overlayService.dispose();
+    super.dispose();
+  }
+
+  void _startNotificationPolling() {
+    if (_authService.currentUser != null) {
+      _notificationsService.startPolling(_authService.currentUser!.id);
+    }
+  }
 
   List<Widget> get _screens => [
     HomeScreen(
@@ -28,10 +61,33 @@ class _MainScreenState extends State<MainScreen> {
     const ProfileScreen(),
   ];
 
+  void _toggleAiChat() {
+    setState(() {
+      _showAiChat = !_showAiChat;
+    });
+  }
+
+  void _closeAiChat() {
+    setState(() {
+      _showAiChat = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: Stack(
+        children: [
+          // Main content
+          _screens[_currentIndex],
+
+          // Floating AI button
+          if (!_showAiChat) FloatingAiButton(onTap: _toggleAiChat),
+
+          // AI Chat overlay
+          if (_showAiChat) AiChatOverlay(onClose: _closeAiChat),
+        ],
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.pureWhite,

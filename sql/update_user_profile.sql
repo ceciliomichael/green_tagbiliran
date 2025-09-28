@@ -1,9 +1,13 @@
--- Function to update user profile (name and barangay)
+-- Drop existing function first to avoid conflicts
+DROP FUNCTION IF EXISTS public.update_user_profile(UUID, VARCHAR(100), VARCHAR(100), VARCHAR(50));
+
+-- Function to update user profile (name, barangay, and phone)
 CREATE OR REPLACE FUNCTION public.update_user_profile(
   p_user_id UUID,
   p_first_name VARCHAR(100),
   p_last_name VARCHAR(100),
-  p_barangay VARCHAR(50)
+  p_barangay VARCHAR(50),
+  p_phone VARCHAR(20) DEFAULT NULL
 )
 RETURNS JSON AS $$
 DECLARE
@@ -50,6 +54,10 @@ BEGIN
     first_name = TRIM(p_first_name),
     last_name = TRIM(p_last_name),
     barangay = p_barangay,
+    phone = CASE 
+      WHEN p_phone IS NOT NULL THEN TRIM(p_phone) 
+      ELSE phone 
+    END,
     updated_at = now()
   WHERE id = p_user_id
   RETURNING id, first_name, last_name, phone, barangay, user_role, created_at INTO user_record;
@@ -80,4 +88,4 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 GRANT EXECUTE ON FUNCTION public.update_user_profile TO authenticated;
 
 -- Comment for documentation
-COMMENT ON FUNCTION public.update_user_profile IS 'Update user profile information (name and barangay)';
+COMMENT ON FUNCTION public.update_user_profile IS 'Update user profile information (name, barangay, and phone)';

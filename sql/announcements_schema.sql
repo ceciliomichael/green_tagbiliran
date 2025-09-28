@@ -1,5 +1,5 @@
 -- =============================================
--- Green Tagbiliran - Announcements Schema
+-- Green Tagbilaran - Announcements Schema
 -- =============================================
 
 -- Create announcements table
@@ -408,7 +408,7 @@ BEGIN
             description,
             created_by
         ) VALUES (
-            'Welcome to Green Tagbiliran',
+            'Welcome to Green Tagbilaran',
             'We are excited to launch our new community waste management system. This platform will help us work together to keep our barangay clean and green. Please report any waste management issues through the app.',
             v_admin_id
         );
