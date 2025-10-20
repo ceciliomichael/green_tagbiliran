@@ -4,6 +4,7 @@ import '../../constants/home_data.dart';
 import '../../constants/routes.dart';
 import '../../services/auth_service.dart';
 import '../../services/notifications_service.dart';
+import '../../services/announcements_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onLocationTap;
@@ -17,6 +18,30 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _authService = AuthService();
   final _notificationsService = NotificationsService();
+  final _announcementsService = AnnouncementsService();
+  
+  int _announcementsCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAnnouncementsCount();
+  }
+
+  Future<void> _loadAnnouncementsCount() async {
+    try {
+      final result = await _announcementsService.getAllAnnouncements();
+      if (result.success && result.announcements != null) {
+        if (mounted) {
+          setState(() {
+            _announcementsCount = result.announcements!.length;
+          });
+        }
+      }
+    } catch (e) {
+      // Silently fail, keep count at 0
+    }
+  }
 
   String get _userBarangay {
     return _authService.currentUser?.barangay ?? 'Unknown Barangay';
@@ -353,90 +378,135 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFeatureCard(FeatureCard feature) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          // MASSIVE primary shadow
-          BoxShadow(
-            color: AppColors.shadowDark.withValues(alpha: 0.4),
-            offset: const Offset(0, 16),
-            blurRadius: 40,
-            spreadRadius: 6,
+    final isEventsCard = feature.title == 'Events & Reminders';
+    final showBadge = isEventsCard && _announcementsCount > 0;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        SizedBox.expand(
+          child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.pureWhite,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              // MASSIVE primary shadow
+              BoxShadow(
+                color: AppColors.shadowDark.withValues(alpha: 0.4),
+                offset: const Offset(0, 16),
+                blurRadius: 40,
+                spreadRadius: 6,
+              ),
+              // STRONG secondary shadow
+              BoxShadow(
+                color: AppColors.shadowDark.withValues(alpha: 0.25),
+                offset: const Offset(0, 8),
+                blurRadius: 24,
+                spreadRadius: 3,
+              ),
+              // BOLD edge definition shadow
+              BoxShadow(
+                color: AppColors.shadowDark.withValues(alpha: 0.2),
+                offset: const Offset(0, 4),
+                blurRadius: 14,
+                spreadRadius: 2,
+              ),
+              // SHARP definition shadow
+              BoxShadow(
+                color: AppColors.shadowDark.withValues(alpha: 0.15),
+                offset: const Offset(0, 2),
+                blurRadius: 6,
+                spreadRadius: 1,
+              ),
+            ],
           ),
-          // STRONG secondary shadow
-          BoxShadow(
-            color: AppColors.shadowDark.withValues(alpha: 0.25),
-            offset: const Offset(0, 8),
-            blurRadius: 24,
-            spreadRadius: 3,
-          ),
-          // BOLD edge definition shadow
-          BoxShadow(
-            color: AppColors.shadowDark.withValues(alpha: 0.2),
-            offset: const Offset(0, 4),
-            blurRadius: 14,
-            spreadRadius: 2,
-          ),
-          // SHARP definition shadow
-          BoxShadow(
-            color: AppColors.shadowDark.withValues(alpha: 0.15),
-            offset: const Offset(0, 2),
-            blurRadius: 6,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            // Handle feature tap
-            if (feature.title == 'Report Issue') {
-              Navigator.pushNamed(context, AppRoutes.reportIssue);
-            } else if (feature.title == 'Schedule') {
-              Navigator.pushNamed(context, AppRoutes.schedule);
-            } else if (feature.title == 'Events & Reminders') {
-              Navigator.pushNamed(context, AppRoutes.events);
-            } else if (feature.title == 'Location') {
-              // Switch to track tab in bottom navigation
-              widget.onLocationTap?.call();
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Image.asset(
-                    feature.imagePath,
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.contain,
-                  ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                // Handle feature tap
+                if (feature.title == 'Report Issue') {
+                  Navigator.pushNamed(context, AppRoutes.reportIssue);
+                } else if (feature.title == 'Schedule') {
+                  Navigator.pushNamed(context, AppRoutes.schedule);
+                } else if (feature.title == 'Events & Reminders') {
+                  Navigator.pushNamed(context, AppRoutes.events);
+                } else if (feature.title == 'Location') {
+                  // Switch to track tab in bottom navigation
+                  widget.onLocationTap?.call();
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Image.asset(
+                        feature.imagePath,
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      feature.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  feature.title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+              ),
             ),
           ),
+          ),
         ),
-      ),
+        // Badge for events count
+        if (showBadge)
+          Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              constraints: const BoxConstraints(
+                minWidth: 24,
+                minHeight: 24,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withValues(alpha: 0.4),
+                    offset: const Offset(0, 2),
+                    blurRadius: 4,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  _announcementsCount > 99 ? '99+' : _announcementsCount.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 

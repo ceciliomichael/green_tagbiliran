@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../../models/announcement.dart';
-import '../../services/announcements_service.dart';
+import '../../utils/image_utils.dart';
 
 class AnnouncementDetailScreen extends StatelessWidget {
   final Announcement announcement;
@@ -282,7 +282,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
     }
 
     try {
-      final imageBytes = AnnouncementsService().base64ToImage(announcement.imageUrl!);
+      final imageBytes = ImageUtils.base64ToImage(announcement.imageUrl!);
       
       return Container(
         width: double.infinity,

@@ -1,0 +1,200 @@
+part of '../schedules_service.dart';
+
+extension ScheduleCrudOperations on SchedulesService {
+  // Create new schedule
+  Future<ScheduleResult> createSchedule({
+    required String barangay,
+    required String day,
+    required String time,
+    required String createdBy,
+  }) async {
+    try {
+      // Validate input
+      if (barangay.trim().isEmpty || day.trim().isEmpty || time.trim().isEmpty) {
+        return ScheduleResult(
+          success: false,
+          error: 'Barangay, day, and time are required',
+        );
+      }
+
+      if (createdBy.trim().isEmpty) {
+        return ScheduleResult(
+          success: false,
+          error: 'User authentication required',
+        );
+      }
+
+      // Prepare request body
+      final requestBody = {
+        'p_barangay': barangay.trim(),
+        'p_day': day.trim(),
+        'p_time': time.trim(),
+        'p_created_by': createdBy,
+      };
+
+      // Make HTTP request to create schedule function
+      final response = await http.post(
+        Uri.parse('${SupabaseConfig.baseApiUrl}/create_schedule'),
+        headers: SupabaseConfig.headers,
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          final scheduleData = responseData['schedule'];
+          final schedule = Schedule.fromJson(scheduleData);
+
+          return ScheduleResult(
+            success: true,
+            schedule: schedule,
+            message: responseData['message'] ?? 'Schedule created successfully',
+          );
+        } else {
+          return ScheduleResult(
+            success: false,
+            error: responseData['error'] ?? 'Failed to create schedule',
+          );
+        }
+      } else {
+        return ScheduleResult(
+          success: false,
+          error: 'Network error: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return ScheduleResult(
+        success: false,
+        error: 'Failed to create schedule: ${e.toString()}',
+      );
+    }
+  }
+
+  // Update schedule
+  Future<ScheduleResult> updateSchedule({
+    required String scheduleId,
+    required String barangay,
+    required String day,
+    required String time,
+    required String userId,
+    bool isActive = true,
+  }) async {
+    try {
+      // Validate input
+      if (barangay.trim().isEmpty || day.trim().isEmpty || time.trim().isEmpty) {
+        return ScheduleResult(
+          success: false,
+          error: 'Barangay, day, and time are required',
+        );
+      }
+
+      if (scheduleId.trim().isEmpty || userId.trim().isEmpty) {
+        return ScheduleResult(
+          success: false,
+          error: 'Invalid schedule or user ID',
+        );
+      }
+
+      // Prepare request body
+      final requestBody = {
+        'p_schedule_id': scheduleId,
+        'p_barangay': barangay.trim(),
+        'p_day': day.trim(),
+        'p_time': time.trim(),
+        'p_user_id': userId,
+        'p_is_active': isActive,
+      };
+
+      // Make HTTP request to update schedule function
+      final response = await http.post(
+        Uri.parse('${SupabaseConfig.baseApiUrl}/update_schedule'),
+        headers: SupabaseConfig.headers,
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          final scheduleData = responseData['schedule'];
+          final schedule = Schedule.fromJson(scheduleData);
+
+          return ScheduleResult(
+            success: true,
+            schedule: schedule,
+            message: responseData['message'] ?? 'Schedule updated successfully',
+          );
+        } else {
+          return ScheduleResult(
+            success: false,
+            error: responseData['error'] ?? 'Failed to update schedule',
+          );
+        }
+      } else {
+        return ScheduleResult(
+          success: false,
+          error: 'Network error: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return ScheduleResult(
+        success: false,
+        error: 'Failed to update schedule: ${e.toString()}',
+      );
+    }
+  }
+
+  // Delete schedule
+  Future<ScheduleResult> deleteSchedule({
+    required String scheduleId,
+    required String userId,
+  }) async {
+    try {
+      if (scheduleId.trim().isEmpty || userId.trim().isEmpty) {
+        return ScheduleResult(
+          success: false,
+          error: 'Invalid schedule or user ID',
+        );
+      }
+
+      final requestBody = {
+        'p_schedule_id': scheduleId,
+        'p_user_id': userId,
+      };
+
+      final response = await http.post(
+        Uri.parse('${SupabaseConfig.baseApiUrl}/delete_schedule'),
+        headers: SupabaseConfig.headers,
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true) {
+          return ScheduleResult(
+            success: true,
+            message: responseData['message'] ?? 'Schedule deleted successfully',
+          );
+        } else {
+          return ScheduleResult(
+            success: false,
+            error: responseData['error'] ?? 'Failed to delete schedule',
+          );
+        }
+      } else {
+        return ScheduleResult(
+          success: false,
+          error: 'Network error: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      return ScheduleResult(
+        success: false,
+        error: 'Failed to delete schedule: ${e.toString()}',
+      );
+    }
+  }
+}
+

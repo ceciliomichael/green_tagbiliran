@@ -35,6 +35,7 @@ flutter:
     - .env
     - assets/svgs/
     - assets/images/onboarding/
+    - assets/images/sample/
     - assets/images/tiles/guide.png
     - assets/images/tiles/events.png
     - assets/images/tiles/location.png

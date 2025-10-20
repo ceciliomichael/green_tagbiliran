@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,6 +5,11 @@ import '../../constants/colors.dart';
 import '../../constants/routes.dart';
 import '../../services/auth_service.dart';
 import '../../services/reports_service.dart';
+import '../../widgets/feature/report_form_field.dart';
+import '../../widgets/feature/report_barangay_selector.dart';
+import '../../widgets/feature/report_image_attachment.dart';
+import '../../widgets/ui/sample_image_dialog.dart';
+import '../../widgets/ui/barangay_selector_sheet.dart';
 
 class ReportIssueScreen extends StatefulWidget {
   const ReportIssueScreen({super.key});
@@ -23,8 +27,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   final _reportsService = ReportsService();
 
   String _selectedBarangay = '';
-  // ignore: prefer_final_fields
-  List<XFile> _selectedImages = [];
+  final List<XFile> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
   bool _isSubmitting = false;
   static const int maxImages = 3;
@@ -53,19 +56,6 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     _initializeUserData();
   }
 
-  void _initializeUserData() {
-    final currentUser = _authService.currentUser;
-    if (currentUser != null) {
-      // Pre-fill user data
-      _fullNameController.text = currentUser.fullName;
-      _phoneController.text = currentUser.phone.replaceFirst('+63', '');
-      _selectedBarangay = currentUser.barangay;
-    } else {
-      // Fallback if no user data available
-      _selectedBarangay = 'Poblacion I';
-    }
-  }
-
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -74,20 +64,33 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     super.dispose();
   }
 
+  void _initializeUserData() {
+    final currentUser = _authService.currentUser;
+    if (currentUser != null) {
+      _fullNameController.text = currentUser.fullName;
+      _phoneController.text = currentUser.phone.replaceFirst('+63', '');
+      _selectedBarangay = currentUser.barangay;
+    } else {
+      _selectedBarangay = 'Poblacion I';
+    }
+  }
+
   Future<void> _pickImage() async {
     if (_selectedImages.length >= maxImages) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Maximum $maxImages photos allowed'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Maximum $maxImages photos allowed'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
       return;
     }
 
     try {
       final XFile? image = await _picker.pickImage(
-        source: kIsWeb ? ImageSource.gallery : ImageSource.camera,
+        source: ImageSource.gallery,
         imageQuality: 70,
       );
 
@@ -98,9 +101,9 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
       }
     }
   }
@@ -111,115 +114,27 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     });
   }
 
+  void _showSampleImage() {
+    showDialog(
+      context: context,
+      builder: (context) => const SampleImageDialog(),
+    );
+  }
+
   void _showBarangaySelector() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (BuildContext context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.6,
-          decoration: const BoxDecoration(
-            color: AppColors.pureWhite,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
-            ),
-          ),
-          child: Column(
-            children: [
-              // Handle bar
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Title
-              const Text(
-                'Select Barangay',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              const Text(
-                'Choose the barangay where the issue is located',
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Barangay list
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: _barangays.length,
-                  itemBuilder: (context, index) {
-                    final barangay = _barangays[index];
-                    final isSelected = barangay == _selectedBarangay;
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primaryGreen.withValues(alpha: 0.1)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColors.primaryGreen
-                              : AppColors.textSecondary.withValues(alpha: 0.2),
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: ListTile(
-                        title: Text(
-                          barangay,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.w500,
-                            color: isSelected
-                                ? AppColors.primaryGreen
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                        trailing: isSelected
-                            ? const Icon(
-                                Icons.check_circle,
-                                color: AppColors.primaryGreen,
-                                size: 24,
-                              )
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _selectedBarangay = barangay;
-                          });
-                          Navigator.pop(context);
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
+      builder: (context) => BarangaySelectorSheet(
+        selectedBarangay: _selectedBarangay,
+        barangays: _barangays,
+        onBarangaySelected: (barangay) {
+          setState(() {
+            _selectedBarangay = barangay;
+          });
+        },
+      ),
     );
   }
 
@@ -228,12 +143,14 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
 
     final currentUser = _authService.currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please login to submit a report'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please login to submit a report'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
       return;
     }
 
@@ -251,35 +168,31 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         images: _selectedImages.isNotEmpty ? _selectedImages : null,
       );
 
+      if (!mounted) return;
+
       if (result.success) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.message ?? 'Report submitted successfully!'),
-              backgroundColor: AppColors.primaryGreen,
-            ),
-          );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message ?? 'Report submitted successfully!'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
 
-          // Clear form
-          _fullNameController.clear();
-          _phoneController.clear();
-          _issueController.clear();
-          setState(() {
-            _selectedImages.clear();
-          });
+        _fullNameController.clear();
+        _phoneController.clear();
+        _issueController.clear();
+        setState(() {
+          _selectedImages.clear();
+        });
 
-          // Navigate to status screen
-          Navigator.pushNamed(context, AppRoutes.issueStatus);
-        }
+        Navigator.pushNamed(context, AppRoutes.issueStatus);
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.error ?? 'Failed to submit report'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.error ?? 'Failed to submit report'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -297,457 +210,6 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         });
       }
     }
-  }
-
-  Widget _buildInputField({
-    required String label,
-    required TextEditingController controller,
-    required String? Function(String?) validator,
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-    String? prefixText,
-    IconData? prefixIcon,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowDark.withValues(alpha: 0.1),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        validator: validator,
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        inputFormatters: inputFormatters,
-        textAlign: maxLines > 1 ? TextAlign.start : TextAlign.start,
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          prefixText: prefixText,
-          prefixStyle: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-          prefixIcon: prefixIcon != null
-              ? Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 12),
-                  child: Icon(
-                    prefixIcon,
-                    color: AppColors.textSecondary,
-                    size: 20,
-                  ),
-                )
-              : null,
-          labelStyle: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 16,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: AppColors.primaryGreen,
-              width: 2,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: AppColors.error, width: 2),
-          ),
-          filled: true,
-          fillColor: AppColors.pureWhite,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 20,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBarangayDropdown() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowDark.withValues(alpha: 0.1),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: GestureDetector(
-        onTap: _showBarangaySelector,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.location_city,
-                color: AppColors.textSecondary,
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text(
-                          'Barangay',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        if (_selectedBarangay ==
-                            _authService.currentUser?.barangay) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryGreen.withValues(
-                                alpha: 0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              'Your Area',
-                              style: TextStyle(
-                                color: AppColors.primaryGreen,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _selectedBarangay,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: AppColors.textSecondary,
-                  size: 16,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageAttachment() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowDark.withValues(alpha: 0.1),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Attach Photos',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  '${_selectedImages.length}/$maxImages',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary.withValues(alpha: 0.8),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Add photo button (always visible if under limit)
-            if (_selectedImages.length < maxImages) ...[
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 120,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceWhite,
-                    border: Border.all(
-                      color: AppColors.textSecondary.withValues(alpha: 0.4),
-                      width: 2,
-                      style: BorderStyle.solid,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.shadowDark.withValues(alpha: 0.08),
-                        offset: const Offset(0, 2),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          kIsWeb
-                              ? Icons.photo_library_outlined
-                              : Icons.camera_alt_outlined,
-                          size: 28,
-                          color: AppColors.primaryGreen,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        kIsWeb
-                            ? 'Tap to select a photo'
-                            : 'Tap to take a photo',
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Flexible(
-                        child: Text(
-                          'Optional: Add up to $maxImages photos',
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.textSecondary.withValues(
-                              alpha: 0.8,
-                            ),
-                            fontSize: 11,
-                            height: 1.2,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-
-            // Display selected images
-            if (_selectedImages.isNotEmpty) ...[
-              ...List.generate(_selectedImages.length, (index) {
-                final image = _selectedImages[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Stack(
-                    children: [
-                      Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: AppColors.surfaceWhite,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.shadowDark.withValues(
-                                alpha: 0.1,
-                              ),
-                              offset: const Offset(0, 2),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: kIsWeb
-                              ? Image.network(
-                                  image.path,
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: AppColors.surfaceWhite,
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.error_outline,
-                                          color: AppColors.error,
-                                          size: 48,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                )
-                              : FutureBuilder<Uint8List>(
-                                  future: image.readAsBytes(),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      return Image.memory(
-                                        snapshot.data!,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                      );
-                                    } else if (snapshot.hasError) {
-                                      return Container(
-                                        color: AppColors.surfaceWhite,
-                                        child: const Center(
-                                          child: Icon(
-                                            Icons.error_outline,
-                                            color: AppColors.error,
-                                            size: 48,
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      return Container(
-                                        color: AppColors.surfaceWhite,
-                                        child: const Center(
-                                          child: CircularProgressIndicator(
-                                            color: AppColors.primaryGreen,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                ),
-                        ),
-                      ),
-                      // Remove button
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: GestureDetector(
-                          onTap: () => _removeImage(index),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.error,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.error.withValues(alpha: 0.3),
-                                  offset: const Offset(0, 2),
-                                  blurRadius: 4,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Image counter badge
-                      Positioned(
-                        top: 8,
-                        left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryGreen.withValues(
-                              alpha: 0.9,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${index + 1}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -778,8 +240,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                 style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 24),
-
-              _buildInputField(
+              ReportFormField(
                 label: 'Full Name',
                 controller: _fullNameController,
                 validator: (value) {
@@ -789,8 +250,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                   return null;
                 },
               ),
-
-              _buildInputField(
+              ReportFormField(
                 label: 'Phone Number',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
@@ -810,10 +270,12 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                   return null;
                 },
               ),
-
-              _buildBarangayDropdown(),
-
-              _buildInputField(
+              ReportBarangaySelector(
+                selectedBarangay: _selectedBarangay,
+                userBarangay: _authService.currentUser?.barangay,
+                onTap: _showBarangaySelector,
+              ),
+              ReportFormField(
                 label: 'Describe the Issue',
                 controller: _issueController,
                 maxLines: 4,
@@ -827,84 +289,92 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                   return null;
                 },
               ),
-
-              _buildImageAttachment(),
-
+              ReportImageAttachment(
+                selectedImages: _selectedImages,
+                maxImages: maxImages,
+                onPickImage: _pickImage,
+                onRemoveImage: _removeImage,
+                onShowSample: _showSampleImage,
+              ),
               const SizedBox(height: 32),
-
-              // Submit button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submitReport,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: _isSubmitting
-                      ? const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Text(
-                              'Submitting...',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        )
-                      : const Text(
-                          'Submit Report',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
-              ),
-
+              _buildSubmitButton(),
               const SizedBox(height: 20),
-
-              // Check status button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.issueStatus);
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primaryGreen,
-                    side: const BorderSide(color: AppColors.primaryGreen),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'Check Report Status',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
+              _buildCheckStatusButton(),
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submitReport,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryGreen,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: _isSubmitting
+            ? const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Submitting...',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              )
+            : const Text(
+                'Submit Report',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildCheckStatusButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: OutlinedButton(
+        onPressed: () {
+          Navigator.pushNamed(context, AppRoutes.issueStatus);
+        },
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primaryGreen,
+          side: const BorderSide(color: AppColors.primaryGreen),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: const Text(
+          'Check Report Status',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
 }
+

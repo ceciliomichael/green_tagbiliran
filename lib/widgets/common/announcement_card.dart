@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../../models/announcement.dart';
-import '../../services/announcements_service.dart';
+import '../../utils/image_utils.dart';
 import '../../screens/announcements/announcement_detail_screen.dart';
 
 class AnnouncementCard extends StatelessWidget {
@@ -235,7 +235,7 @@ class AnnouncementCard extends StatelessWidget {
 
     try {
       // Decode base64 image
-      final imageBytes = AnnouncementsService().base64ToImage(announcement.imageUrl!);
+      final imageBytes = ImageUtils.base64ToImage(announcement.imageUrl!);
       
       return Container(
         width: double.infinity,

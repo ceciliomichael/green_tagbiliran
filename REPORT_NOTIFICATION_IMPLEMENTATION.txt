@@ -1,0 +1,124 @@
+====================================================================
+REPORT STATUS NOTIFICATION IMPLEMENTATION
+====================================================================
+
+OVERVIEW:
+---------
+Implemented automatic notifications to users when an admin updates 
+their report status to "resolved" or "rejected".
+
+CHANGES MADE:
+-------------
+
+1. Backend (SQL):
+   - Created new migration: sql/add_user_notification_support.sql
+   - Updated notifications table schema to support 'user' target type
+   - Added target_user_id column to notifications table
+   - Modified send_notification function to handle user-specific notifications
+   - Added validation for user-specific notification parameters
+
+2. Services Layer:
+   - Added sendReportStatusNotification method in NotificationAdminOperations
+   - Method automatically generates appropriate notification messages based on status
+   - Supports custom admin notes in notification messages
+   - Handles 3 status types:
+     * resolved: "Report Resolved ✓"
+     * rejected: "Report Rejected"
+     * in_progress: "Report In Progress"
+
+3. UI Layer (Admin Report Detail Screen):
+   - Added NotificationsService import
+   - Integrated notification sending in _updateReportStatus method
+   - Sends notification after successful report status update
+   - Only triggers for "resolved" and "rejected" statuses
+   - Includes admin notes in notification for context
+
+NOTIFICATION MESSAGES:
+----------------------
+
+When status = "resolved":
+  Title: "Report Resolved ✓"
+  Message: "Your report has been resolved. Admin notes: [notes]"
+           (or default message if no notes provided)
+
+When status = "rejected":
+  Title: "Report Rejected"
+  Message: "Your report has been rejected. Reason: [notes]"
+           (or default message if no notes provided)
+
+When status = "in_progress":
+  Title: "Report In Progress"
+  Message: "Your report is being processed. Update: [notes]"
+           (or default message if no notes provided)
+
+IMPLEMENTATION FLOW:
+--------------------
+
+1. Admin views report in Admin Report Detail Screen
+2. Admin clicks "Update" button
+3. Admin selects new status (resolved/rejected) and adds notes
+4. Admin confirms the update
+5. System updates report status in database
+6. System sends notification to the report owner (user_id)
+7. User receives notification in their notifications list
+8. User can view the notification with admin notes
+
+DATABASE MIGRATION STEPS:
+--------------------------
+
+To enable this feature, run the following SQL migration on your Supabase database:
+
+sql/add_user_notification_support.sql
+
+This will:
+- Add 'user' to allowed target_type values
+- Add target_user_id column to notifications table
+- Update send_notification function to support user-specific notifications
+- Create necessary indexes for performance
+
+TESTING:
+--------
+
+To test the implementation:
+
+1. Admin Login:
+   - Log in as admin user
+   - Navigate to Reports section
+   - Open any pending report
+
+2. Update Report Status:
+   - Click "Update" button
+   - Change status to "Resolved" or "Rejected"
+   - Add admin notes (optional)
+   - Click "Update"
+
+3. Verify User Notification:
+   - Log in as the user who submitted the report
+   - Check notifications (bell icon)
+   - Verify notification appears with correct title and message
+   - Verify admin notes are included in the message
+
+BENEFITS:
+---------
+
+✓ Users are automatically informed when their reports are processed
+✓ Users receive context through admin notes
+✓ Reduces need for manual follow-up communication
+✓ Improves transparency and user experience
+✓ Centralized notification system for all status updates
+
+FILES MODIFIED:
+---------------
+
+1. lib/services/notifications/notification_admin_operations.dart
+   - Added sendReportStatusNotification method
+
+2. lib/screens/admin/admin_report_detail_screen.dart
+   - Added NotificationsService integration
+   - Modified _updateReportStatus to send notifications
+
+3. sql/add_user_notification_support.sql (NEW)
+   - Database schema update for user-specific notifications
+
+====================================================================
+
