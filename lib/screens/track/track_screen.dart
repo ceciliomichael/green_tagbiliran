@@ -4,6 +4,7 @@ import '../../services/track_service.dart';
 import '../../widgets/track/map_widget.dart';
 import '../../widgets/track/track_info_card.dart';
 import '../../widgets/track/route_legend.dart';
+import '../../l10n/app_localizations.dart';
 
 class TrackScreen extends StatefulWidget {
   const TrackScreen({super.key});
@@ -16,6 +17,8 @@ class _TrackScreenState extends State<TrackScreen> {
   final TrackService _trackService = TrackService();
 
   Widget _buildHeader() {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
@@ -33,28 +36,28 @@ class _TrackScreenState extends State<TrackScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Location display
-              const Row(
+              Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.location_on_outlined,
                     color: Colors.white,
                     size: 20,
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Tagbilaran City, Bohol',
-                        style: TextStyle(
+                        l10n.tagbilaranCityBohol,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
-                        'Garbage Truck Tracking',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                        l10n.garbageTruckTracking,
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
                   ),
@@ -71,18 +74,18 @@ class _TrackScreenState extends State<TrackScreen> {
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.radio_button_checked,
                       color: Colors.white,
                       size: 16,
                     ),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     Text(
-                      'LIVE',
-                      style: TextStyle(
+                      l10n.live,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -111,22 +114,22 @@ class _TrackScreenState extends State<TrackScreen> {
               children: [
                 const Icon(Icons.local_shipping, color: Colors.white, size: 22),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Truck Status',
-                        style: TextStyle(
+                        l10n.truckStatus,
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
-                        'Active Collection Route',
-                        style: TextStyle(
+                        l10n.activeCollectionRoute,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

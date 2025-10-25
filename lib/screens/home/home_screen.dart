@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../constants/colors.dart';
 import '../../constants/home_data.dart';
 import '../../constants/routes.dart';
@@ -65,9 +66,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  String _getNextCollectionDay() {
+  String _getNextCollectionDay(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final schedule = _nextSchedule;
-    if (schedule == null) return 'No schedule available';
+    if (schedule == null) return l10n.noScheduleAvailable;
 
     final now = DateTime.now();
     final currentDay = now.weekday; // 1 = Monday, 7 = Sunday
@@ -84,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (dayString.contains('saturday')) collectionDays.add(6);
     if (dayString.contains('sunday')) collectionDays.add(7);
 
-    if (collectionDays.isEmpty) return 'No schedule available';
+    if (collectionDays.isEmpty) return l10n.noScheduleAvailable;
 
     // Find next collection day
     int? nextDay;
@@ -100,30 +102,36 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    if (nextDay == null) return 'No schedule available';
+    if (nextDay == null) return l10n.noScheduleAvailable;
 
-    // Format the result
-    final dayNames = [
-      '',
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
+    // Get localized day names
+    String getDayName(int dayNum) {
+      switch (dayNum) {
+        case 1: return l10n.dayMonday;
+        case 2: return l10n.dayTuesday;
+        case 3: return l10n.dayWednesday;
+        case 4: return l10n.dayThursday;
+        case 5: return l10n.dayFriday;
+        case 6: return l10n.daySaturday;
+        case 7: return l10n.daySunday;
+        default: return '';
+      }
+    }
+
+    final dayName = getDayName(nextDay);
 
     if (daysUntil == 1) {
-      return 'Tomorrow (${dayNames[nextDay]})';
+      return l10n.tomorrow(dayName);
     } else if (daysUntil < 7) {
-      return '${dayNames[nextDay]} ($daysUntil days)';
+      return l10n.nextDay(dayName, daysUntil);
     } else {
-      return 'Next ${dayNames[nextDay]}';
+      return l10n.nextDayNext(dayName);
     }
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -149,20 +157,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Tagbilaran City, Bohol',
-                        style: TextStyle(
+                        l10n.tagbilaranCityBohol,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
-                        'Waste Management Hub',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                        l10n.wasteManagementHub,
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
                   ),
@@ -252,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Welcome, $_userName',
+                        l10n.welcome(_userName),
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
@@ -261,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Barangay $_userBarangay',
+                        l10n.barangay(_userBarangay),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -321,9 +329,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Next Collection',
-                        style: TextStyle(
+                      Text(
+                        l10n.nextCollection,
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
@@ -331,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _getNextCollectionDay(),
+                        _getNextCollectionDay(context),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -377,9 +385,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFeatureCard(FeatureCard feature) {
+  Widget _buildFeatureCard(BuildContext context, FeatureCard feature) {
+    final l10n = AppLocalizations.of(context)!;
     final isEventsCard = feature.title == 'Events & Reminders';
     final showBadge = isEventsCard && _announcementsCount > 0;
+    
+    // Get localized title
+    String getLocalizedTitle() {
+      switch (feature.title) {
+        case 'Schedule':
+          return l10n.schedule;
+        case 'Events & Reminders':
+          return l10n.eventsReminders;
+        case 'Report Issue':
+          return l10n.reportIssue;
+        case 'Location':
+          return l10n.location;
+        default:
+          return feature.title;
+      }
+    }
 
     return Stack(
       clipBehavior: Clip.none,
@@ -454,7 +479,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      feature.title,
+                      getLocalizedTitle(),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -512,6 +537,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: AppColors.pureWhite,
       body: SafeArea(
@@ -519,7 +546,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             children: [
               // Green header
-              _buildHeader(),
+              _buildHeader(context),
 
               const SizedBox(height: 24),
 
@@ -529,9 +556,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Home',
-                      style: TextStyle(
+                    Text(
+                      l10n.homeTitle,
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
@@ -543,15 +570,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.camera_alt_outlined,
                             color: AppColors.textSecondary,
                             size: 16,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Click & Complaint',
-                            style: TextStyle(
+                            l10n.homeClickAndComplaint,
+                            style: const TextStyle(
                               fontSize: 14,
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w500,
@@ -580,7 +607,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   itemCount: HomeConstants.featureCards.length,
                   itemBuilder: (context, index) {
-                    return _buildFeatureCard(HomeConstants.featureCards[index]);
+                    return _buildFeatureCard(context, HomeConstants.featureCards[index]);
                   },
                 ),
               ),

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
+import 'utils/fallback_material_localizations.dart';
+import 'utils/fallback_cupertino_localizations.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -23,6 +27,7 @@ import 'screens/profile/help_support_screen.dart';
 import 'constants/routes.dart';
 import 'constants/colors.dart';
 import 'services/auth_service.dart';
+import 'services/language_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,17 +35,73 @@ void main() async {
   // Initialize authentication service
   await AuthService().initialize();
 
-  runApp(const MainApp());
+  // Load saved locale
+  final savedLocale = await LanguageService.getSavedLocale();
+
+  runApp(MainApp(initialLocale: savedLocale));
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class MainApp extends StatefulWidget {
+  final Locale? initialLocale;
+
+  const MainApp({super.key, this.initialLocale});
+
+  @override
+  State<MainApp> createState() => _MainAppState();
+
+  // Static method to change language from anywhere in the app
+  static void setLocale(BuildContext context, Locale locale) {
+    final state = context.findAncestorStateOfType<_MainAppState>();
+    state?.setLocale(locale);
+  }
+}
+
+class _MainAppState extends State<MainApp> {
+  Locale? _locale;
+
+  @override
+  void initState() {
+    super.initState();
+    _locale = widget.initialLocale;
+  }
+
+  void setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+    LanguageService.saveLocale(locale);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Green Tagbilaran',
       debugShowCheckedModeBanner: false,
+      locale: _locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        FallbackMaterialLocalizationsDelegate(),
+        GlobalWidgetsLocalizations.delegate,
+        FallbackCupertinoLocalizationsDelegate(),
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      // Fallback to English for Material/Cupertino when Cebuano is selected
+      localeResolutionCallback: (locale, supportedLocales) {
+        // If the device locale is not supported, default to English
+        if (locale == null) {
+          return const Locale('en');
+        }
+        
+        // Check if we support this language
+        for (var supportedLocale in supportedLocales) {
+          if (supportedLocale.languageCode == locale.languageCode) {
+            return supportedLocale;
+          }
+        }
+        
+        // Fallback to English
+        return const Locale('en');
+      },
       theme: ThemeData(
         primarySwatch: Colors.green,
         textTheme: GoogleFonts.interTextTheme(

@@ -47,6 +47,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
   Future<void> _loadReports() async {
     final currentUser = _authService.currentUser;
     if (currentUser == null) {
+      if (!mounted) return;
       setState(() {
         _error = 'User not logged in';
         _isLoading = false;
@@ -54,6 +55,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _error = null;
@@ -63,6 +65,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       final result = await _reportsService.getAllReports(
         adminId: currentUser.id,
       );
+
+      if (!mounted) return;
 
       if (result.success && result.reports != null) {
         setState(() {
@@ -77,6 +81,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = 'An error occurred: ${e.toString()}';
         _isLoading = false;

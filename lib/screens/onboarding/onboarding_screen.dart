@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../constants/colors.dart';
 import '../../constants/routes.dart';
 import '../../constants/onboarding_data.dart';
@@ -123,7 +124,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildOnboardingPage(OnboardingData data) {
+  Widget _buildOnboardingPage(BuildContext context, OnboardingData data, int index) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    // Get localized title and description based on index
+    String title;
+    String description;
+    
+    switch (index) {
+      case 0:
+        title = l10n.onb1Title;
+        description = l10n.onb1Desc;
+        break;
+      case 1:
+        title = l10n.onb2Title;
+        description = l10n.onb2Desc;
+        break;
+      case 2:
+        title = l10n.onb3Title;
+        description = l10n.onb3Desc;
+        break;
+      default:
+        title = data.title;
+        description = data.description;
+    }
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
@@ -155,7 +180,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
           // Title
           Text(
-            data.title,
+            title,
             style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -169,7 +194,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
           // Description
           Text(
-            data.description,
+            description,
             style: const TextStyle(
               fontSize: 16,
               color: AppColors.textSecondary,
@@ -186,6 +211,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: AppColors.pureWhite,
       body: SafeArea(
@@ -196,7 +223,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.all(16),
               child: Align(
                 alignment: Alignment.topRight,
-                child: _buildButton(text: 'Skip', onPressed: _skipOnboarding),
+                child: _buildButton(text: l10n.onboardingSkip, onPressed: _skipOnboarding),
               ),
             ),
 
@@ -212,7 +239,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemCount: OnboardingConstants.onboardingPages.length,
                 itemBuilder: (context, index) {
                   return _buildOnboardingPage(
+                    context,
                     OnboardingConstants.onboardingPages[index],
+                    index,
                   );
                 },
               ),
@@ -236,8 +265,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         text:
                             _currentPage ==
                                 OnboardingConstants.onboardingPages.length - 1
-                            ? 'Get Started'
-                            : 'Next',
+                            ? l10n.onboardingGetStarted
+                            : l10n.onboardingNext,
                         onPressed: _nextPage,
                         isPrimary: true,
                       ),

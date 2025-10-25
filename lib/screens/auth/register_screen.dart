@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/app_localizations.dart';
 import '../../constants/colors.dart';
 import '../../constants/routes.dart';
 import '../../services/auth_service.dart';
@@ -143,6 +144,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _showBarangaySelector() {
+    final l10n = AppLocalizations.of(context)!;
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -173,9 +176,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 20),
 
               // Title
-              const Text(
-                'Select Your Barangay',
-                style: TextStyle(
+              Text(
+                l10n.selectYourBarangay,
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
@@ -184,9 +187,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 8),
 
-              const Text(
-                'Tagbilaran City, Bohol',
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              Text(
+                l10n.tagbilaranCityBohol,
+                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
               ),
 
               const SizedBox(height: 20),
@@ -446,6 +449,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildBarangaySelector() {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: GestureDetector(
@@ -473,9 +478,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Barangay (Tagbilaran City)',
-                      style: TextStyle(
+                    Text(
+                      l10n.barangayTagbilaran,
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 16,
                       ),
@@ -515,6 +520,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: AppColors.pureWhite,
       appBar: AppBar(
@@ -566,9 +573,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Column(
                             children: [
-                              const Text(
-                                'Create Account',
-                                style: TextStyle(
+                              Text(
+                                l10n.createAccount,
+                                style: const TextStyle(
                                   fontSize: 36,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
@@ -579,9 +586,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               const SizedBox(height: 12),
 
-                              const Text(
-                                'Join us and start your eco-friendly journey',
-                                style: TextStyle(
+                              Text(
+                                l10n.joinUs,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   color: AppColors.textSecondary,
                                   fontWeight: FontWeight.w400,
@@ -601,9 +608,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Sign Up',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.signUp,
+                                  style: const TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.textPrimary,
@@ -615,7 +622,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 // First Name - Full width
                                 _buildTextField(
                                   controller: _firstNameController,
-                                  label: 'First Name',
+                                  label: l10n.firstName,
                                   icon: Icons.person_outline,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -631,7 +638,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 // Last Name - Full width
                                 _buildTextField(
                                   controller: _lastNameController,
-                                  label: 'Last Name',
+                                  label: l10n.lastName,
                                   icon: Icons.person_outline,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -647,7 +654,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 // Phone Number with +63 prefix
                                 _buildTextField(
                                   controller: _phoneController,
-                                  label: 'Phone Number',
+                                  label: l10n.phoneNumber,
                                   icon: Icons.phone_outlined,
                                   keyboardType: TextInputType.phone,
                                   prefixText: '+63 ',
@@ -671,7 +678,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                                 _buildTextField(
                                   controller: _passwordController,
-                                  label: 'Password',
+                                  label: l10n.password,
                                   icon: Icons.lock_outline,
                                   obscureText: true,
                                   validator: (value) {
@@ -687,7 +694,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                                 _buildTextField(
                                   controller: _confirmPasswordController,
-                                  label: 'Confirm Password',
+                                  label: l10n.confirmPassword,
                                   icon: Icons.lock_outline,
                                   obscureText: true,
                                   validator: (value) {
@@ -705,8 +712,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                                 _buildButton(
                                   text: _isLoading
-                                      ? 'Creating Account...'
-                                      : 'Create Account',
+                                      ? l10n.creatingAccount
+                                      : l10n.createAccount,
                                   onPressed: _isLoading
                                       ? () {}
                                       : _handleRegistration,
@@ -724,9 +731,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
-                                'Already have an account?',
-                                style: TextStyle(
+                              Text(
+                                l10n.alreadyHaveAccount,
+                                style: const TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w400,
@@ -734,7 +741,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               const SizedBox(width: 8),
                               _buildLinkButton(
-                                text: 'Sign In',
+                                text: l10n.signIn,
                                 onPressed: () => Navigator.pop(context),
                               ),
                             ],

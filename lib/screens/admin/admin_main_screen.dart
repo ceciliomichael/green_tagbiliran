@@ -36,6 +36,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   Future<void> _loadActiveReportsCount() async {
     final currentUser = _authService.currentUser;
     if (currentUser == null) {
+      if (!mounted) return;
       setState(() {
         _reportsError = 'User not logged in';
         _isLoadingReports = false;
@@ -43,6 +44,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _isLoadingReports = true;
       _reportsError = null;
@@ -52,6 +54,8 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       final result = await _reportsService.getAllReports(
         adminId: currentUser.id,
       );
+
+      if (!mounted) return;
 
       if (result.success && result.reports != null) {
         // Count unresolved reports (pending + in progress)
@@ -71,6 +75,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _reportsError = 'An error occurred: ${e.toString()}';
         _isLoadingReports = false;
@@ -81,6 +86,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   Future<void> _loadActiveEventsCount() async {
     final currentUser = _authService.currentUser;
     if (currentUser == null) {
+      if (!mounted) return;
       setState(() {
         _eventsError = 'User not logged in';
         _isLoadingEvents = false;
@@ -88,6 +94,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _isLoadingEvents = true;
       _eventsError = null;
@@ -95,6 +102,8 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
 
     try {
       final result = await _announcementsService.getAnnouncementsByAdmin(currentUser.id);
+
+      if (!mounted) return;
 
       if (result.success && result.announcements != null) {
         setState(() {
@@ -108,6 +117,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _eventsError = 'An error occurred: ${e.toString()}';
         _isLoadingEvents = false;
@@ -527,7 +537,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                             AppRoutes.adminReports,
                           );
                           // Refresh count when returning from reports screen
-                          if (result == true || mounted) {
+                          if (mounted && (result == true)) {
                             _loadActiveReportsCount();
                           }
                         },
@@ -548,7 +558,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                             AppRoutes.adminEvents,
                           );
                           // Refresh count when returning from events screen
-                          if (result == true || mounted) {
+                          if (mounted && (result == true)) {
                             _loadActiveEventsCount();
                           }
                         },

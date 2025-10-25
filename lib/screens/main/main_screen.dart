@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../constants/colors.dart';
 import '../home/home_screen.dart';
 import '../track/track_screen.dart';
@@ -75,6 +76,8 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       body: Stack(
         children: [
@@ -119,26 +122,26 @@ class _MainScreenState extends State<MainScreen> {
             fontWeight: FontWeight.w500,
           ),
           elevation: 0,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home),
+              label: l10n.navHome,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.location_on_outlined),
-              activeIcon: Icon(Icons.location_on),
-              label: 'Track',
+              icon: const Icon(Icons.location_on_outlined),
+              activeIcon: const Icon(Icons.location_on),
+              label: l10n.navTrack,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.recycling_outlined),
-              activeIcon: Icon(Icons.recycling),
-              label: 'Recycle',
+              icon: const Icon(Icons.recycling_outlined),
+              activeIcon: const Icon(Icons.recycling),
+              label: l10n.navRecycle,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
+              icon: const Icon(Icons.person_outline),
+              activeIcon: const Icon(Icons.person),
+              label: l10n.navProfile,
             ),
           ],
         ),

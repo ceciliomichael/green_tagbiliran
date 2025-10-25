@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
+import '../../l10n/app_localizations.dart';
 
 class RecycleScreen extends StatefulWidget {
   const RecycleScreen({super.key});
@@ -11,218 +12,225 @@ class RecycleScreen extends StatefulWidget {
 class _RecycleScreenState extends State<RecycleScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-
-  final List<WasteCategory> wasteCategories = [
-    WasteCategory(
-      name: 'Biodegradable',
-      color: const Color(0xFF4CAF50),
-      icon: Icons.eco,
-      description: 'Organic waste that naturally decomposes',
-      steps: [
-        WasteStep(
-          title: 'Identify Biodegradable Items',
-          description:
-              'Look for organic materials that can decompose naturally',
-          examples: [
-            'Food scraps',
-            'Fruit peels',
-            'Vegetable waste',
-            'Garden trimmings',
-            'Paper',
-            'Cardboard',
-          ],
-          icon: Icons.visibility,
-        ),
-        WasteStep(
-          title: 'Clean Food Containers',
-          description:
-              'Remove any food residue from containers before disposal',
-          examples: [
-            'Rinse containers',
-            'Remove labels if possible',
-            'Scrape off remaining food',
-          ],
-          icon: Icons.cleaning_services,
-        ),
-        WasteStep(
-          title: 'Separate from Other Waste',
-          description: 'Place biodegradable items in designated green bins',
-          examples: [
-            'Use green or brown bins',
-            'Keep dry items separate from wet',
-            'Layer materials properly',
-          ],
-          icon: Icons.recycling,
-        ),
-        WasteStep(
-          title: 'Proper Storage',
-          description: 'Store biodegradable waste correctly to prevent odors',
-          examples: [
-            'Use lined bins',
-            'Empty regularly',
-            'Keep in cool, dry place',
-          ],
-          icon: Icons.storage,
-        ),
-      ],
-    ),
-    WasteCategory(
-      name: 'Non-Biodegradable',
-      color: const Color(0xFFFF7043),
-      icon: Icons.block,
-      description: 'Materials that do not decompose naturally',
-      steps: [
-        WasteStep(
-          title: 'Identify Non-Biodegradable Items',
-          description: 'Recognize materials that cannot decompose naturally',
-          examples: [
-            'Plastic bags',
-            'Styrofoam',
-            'Rubber items',
-            'Metal cans',
-            'Glass bottles',
-          ],
-          icon: Icons.search,
-        ),
-        WasteStep(
-          title: 'Clean and Prepare',
-          description: 'Clean items before disposal to prevent contamination',
-          examples: [
-            'Rinse containers',
-            'Remove caps and lids',
-            'Dry thoroughly',
-          ],
-          icon: Icons.wash,
-        ),
-        WasteStep(
-          title: 'Sort by Material Type',
-          description: 'Group similar materials together for proper processing',
-          examples: [
-            'Separate plastics by type',
-            'Group metal items',
-            'Keep glass separate',
-          ],
-          icon: Icons.sort,
-        ),
-        WasteStep(
-          title: 'Use Designated Bins',
-          description:
-              'Place items in appropriate non-biodegradable waste bins',
-          examples: [
-            'Use red or black bins',
-            'Follow local guidelines',
-            'Avoid overpacking',
-          ],
-          icon: Icons.delete,
-        ),
-      ],
-    ),
-    WasteCategory(
-      name: 'Recyclable',
-      color: const Color(0xFF2196F3),
-      icon: Icons.autorenew,
-      description: 'Materials that can be processed into new products',
-      steps: [
-        WasteStep(
-          title: 'Check Recycling Symbols',
-          description: 'Look for recycling symbols and numbers on items',
-          examples: [
-            'Plastic numbers 1-7',
-            'Recycling arrows symbol',
-            'Material identification codes',
-          ],
-          icon: Icons.numbers,
-        ),
-        WasteStep(
-          title: 'Clean Thoroughly',
-          description: 'Clean all recyclable items to remove contaminants',
-          examples: [
-            'Remove food residue',
-            'Rinse with water',
-            'Remove tape and stickers',
-          ],
-          icon: Icons.water_drop,
-        ),
-        WasteStep(
-          title: 'Separate by Category',
-          description: 'Sort recyclables into proper categories',
-          examples: [
-            'Paper products',
-            'Plastic containers',
-            'Metal cans',
-            'Glass bottles',
-          ],
-          icon: Icons.category,
-        ),
-        WasteStep(
-          title: 'Prepare for Collection',
-          description: 'Package recyclables correctly for pickup',
-          examples: [
-            'Use recycling bins',
-            'Flatten cardboard',
-            'Bundle paper materials',
-          ],
-          icon: Icons.local_shipping,
-        ),
-      ],
-    ),
-    WasteCategory(
-      name: 'Hazardous',
-      color: const Color(0xFFE91E63),
-      icon: Icons.warning,
-      description: 'Dangerous materials requiring special handling',
-      steps: [
-        WasteStep(
-          title: 'Identify Hazardous Materials',
-          description:
-              'Recognize items that pose health or environmental risks',
-          examples: [
-            'Batteries',
-            'Paint cans',
-            'Chemicals',
-            'Light bulbs',
-            'Electronics',
-          ],
-          icon: Icons.dangerous,
-        ),
-        WasteStep(
-          title: 'Handle with Care',
-          description: 'Use proper safety precautions when handling',
-          examples: [
-            'Wear gloves',
-            'Avoid direct contact',
-            'Work in ventilated area',
-          ],
-          icon: Icons.health_and_safety,
-        ),
-        WasteStep(
-          title: 'Keep Original Containers',
-          description: 'Store hazardous items in their original packaging',
-          examples: [
-            'Do not mix chemicals',
-            'Keep labels intact',
-            'Secure containers',
-          ],
-          icon: Icons.inventory_2,
-        ),
-        WasteStep(
-          title: 'Find Special Collection Points',
-          description: 'Locate authorized disposal facilities',
-          examples: [
-            'Contact local authorities',
-            'Visit collection centers',
-            'Schedule pickup',
-          ],
-          icon: Icons.location_on,
-        ),
-      ],
-    ),
-  ];
+  late List<WasteCategory> wasteCategories;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: wasteCategories.length, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _buildLocalizedCategories();
+  }
+
+  void _buildLocalizedCategories() {
+    final l10n = AppLocalizations.of(context)!;
+    
+    wasteCategories = [
+      WasteCategory(
+        name: l10n.biodegradable,
+        color: const Color(0xFF4CAF50),
+        icon: Icons.eco,
+        description: l10n.biodegradableDesc,
+        steps: [
+          WasteStep(
+            title: l10n.identifyBiodegradableItems,
+            description: l10n.identifyBiodegradableItemsDesc,
+            examples: [
+              l10n.exampleFoodScraps,
+              l10n.exampleFruitPeels,
+              l10n.exampleVegetableWaste,
+              l10n.exampleGardenTrimmings,
+              l10n.examplePaper,
+              l10n.exampleCardboard,
+            ],
+            icon: Icons.visibility,
+          ),
+          WasteStep(
+            title: l10n.cleanFoodContainers,
+            description: l10n.cleanFoodContainersDesc,
+            examples: [
+              l10n.exampleRinseContainers,
+              l10n.exampleRemoveLabels,
+              l10n.exampleScrapeFood,
+            ],
+            icon: Icons.cleaning_services,
+          ),
+          WasteStep(
+            title: l10n.separateFromOtherWaste,
+            description: l10n.separateFromOtherWasteDesc,
+            examples: [
+              l10n.exampleGreenBins,
+              l10n.exampleKeepDrySeparate,
+              l10n.exampleLayerMaterials,
+            ],
+            icon: Icons.recycling,
+          ),
+          WasteStep(
+            title: l10n.properStorage,
+            description: l10n.properStorageDesc,
+            examples: [
+              l10n.exampleLinedBins,
+              l10n.exampleEmptyRegularly,
+              l10n.exampleCoolPlace,
+            ],
+            icon: Icons.storage,
+          ),
+        ],
+      ),
+      WasteCategory(
+        name: l10n.nonBiodegradable,
+        color: const Color(0xFFFF7043),
+        icon: Icons.block,
+        description: l10n.nonBiodegradableDesc,
+        steps: [
+          WasteStep(
+            title: l10n.identifyNonBiodegradableItems,
+            description: l10n.identifyNonBiodegradableItemsDesc,
+            examples: [
+              l10n.examplePlasticBags,
+              l10n.exampleStyrofoam,
+              l10n.exampleRubberItems,
+              l10n.exampleMetalCans,
+              l10n.exampleGlassBottles,
+            ],
+            icon: Icons.search,
+          ),
+          WasteStep(
+            title: l10n.cleanAndPrepare,
+            description: l10n.cleanAndPrepareDesc,
+            examples: [
+              l10n.exampleRinseContainers,
+              l10n.exampleRemoveCaps,
+              l10n.exampleDryThoroughly,
+            ],
+            icon: Icons.wash,
+          ),
+          WasteStep(
+            title: l10n.sortByMaterialType,
+            description: l10n.sortByMaterialTypeDesc,
+            examples: [
+              l10n.exampleSeparatePlastics,
+              l10n.exampleGroupMetal,
+              l10n.exampleKeepGlassSeparate,
+            ],
+            icon: Icons.sort,
+          ),
+          WasteStep(
+            title: l10n.useDesignatedBins,
+            description: l10n.useDesignatedBinsDesc,
+            examples: [
+              l10n.exampleRedBins,
+              l10n.exampleFollowGuidelines,
+              l10n.exampleAvoidOverpacking,
+            ],
+            icon: Icons.delete,
+          ),
+        ],
+      ),
+      WasteCategory(
+        name: l10n.recyclable,
+        color: const Color(0xFF2196F3),
+        icon: Icons.autorenew,
+        description: l10n.recyclableDesc,
+        steps: [
+          WasteStep(
+            title: l10n.checkRecyclingSymbols,
+            description: l10n.checkRecyclingSymbolsDesc,
+            examples: [
+              l10n.examplePlasticNumbers,
+              l10n.exampleRecyclingSymbol,
+              l10n.exampleMaterialCodes,
+            ],
+            icon: Icons.numbers,
+          ),
+          WasteStep(
+            title: l10n.cleanThoroughly,
+            description: l10n.cleanThoroughlyDesc,
+            examples: [
+              l10n.exampleRemoveFoodResidue,
+              l10n.exampleRinseWater,
+              l10n.exampleRemoveTape,
+            ],
+            icon: Icons.water_drop,
+          ),
+          WasteStep(
+            title: l10n.separateByCategory,
+            description: l10n.separateByCategoryDesc,
+            examples: [
+              l10n.examplePaperProducts,
+              l10n.examplePlasticContainers,
+              l10n.exampleMetalCans,
+              l10n.exampleGlassBottles,
+            ],
+            icon: Icons.category,
+          ),
+          WasteStep(
+            title: l10n.prepareForCollection,
+            description: l10n.prepareForCollectionDesc,
+            examples: [
+              l10n.exampleRecyclingBins,
+              l10n.exampleFlattenCardboard,
+              l10n.exampleBundlePaper,
+            ],
+            icon: Icons.local_shipping,
+          ),
+        ],
+      ),
+      WasteCategory(
+        name: l10n.hazardous,
+        color: const Color(0xFFE91E63),
+        icon: Icons.warning,
+        description: l10n.hazardousDesc,
+        steps: [
+          WasteStep(
+            title: l10n.identifyHazardousMaterials,
+            description: l10n.identifyHazardousMaterialsDesc,
+            examples: [
+              l10n.exampleBatteries,
+              l10n.examplePaintCans,
+              l10n.exampleChemicals,
+              l10n.exampleLightBulbs,
+              l10n.exampleElectronics,
+            ],
+            icon: Icons.dangerous,
+          ),
+          WasteStep(
+            title: l10n.handleWithCare,
+            description: l10n.handleWithCareDesc,
+            examples: [
+              l10n.exampleWearGloves,
+              l10n.exampleAvoidContact,
+              l10n.exampleVentilatedArea,
+            ],
+            icon: Icons.health_and_safety,
+          ),
+          WasteStep(
+            title: l10n.keepOriginalContainers,
+            description: l10n.keepOriginalContainersDesc,
+            examples: [
+              l10n.exampleDontMixChemicals,
+              l10n.exampleKeepLabels,
+              l10n.exampleSecureContainers,
+            ],
+            icon: Icons.inventory_2,
+          ),
+          WasteStep(
+            title: l10n.findSpecialCollectionPoints,
+            description: l10n.findSpecialCollectionPointsDesc,
+            examples: [
+              l10n.exampleContactAuthorities,
+              l10n.exampleVisitCenters,
+              l10n.exampleSchedulePickup,
+            ],
+            icon: Icons.location_on,
+          ),
+        ],
+      ),
+    ];
   }
 
   @override
@@ -255,6 +263,8 @@ class _RecycleScreenState extends State<RecycleScreen>
   }
 
   Widget _buildHeader() {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -297,22 +307,22 @@ class _RecycleScreenState extends State<RecycleScreen>
                 ),
               ),
               const SizedBox(width: 16),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Waste Segregation Guide',
-                      style: TextStyle(
+                      l10n.wasteSegregationGuide,
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      'Learn proper waste separation techniques',
-                      style: TextStyle(
+                      l10n.learnProperWasteSeparation,
+                      style: const TextStyle(
                         fontSize: 14,
                         color: AppColors.textSecondary,
                       ),

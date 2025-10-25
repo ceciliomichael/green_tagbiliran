@@ -136,6 +136,7 @@ class _AdminReportDetailScreenState extends State<AdminReportDetailScreen> {
     final currentUser = _authService.currentUser;
     if (currentUser == null) return;
 
+    if (!mounted) return;
     setState(() {
       _isUpdatingStatus = true;
     });
@@ -152,6 +153,8 @@ class _AdminReportDetailScreenState extends State<AdminReportDetailScreen> {
       adminName: adminName,
     );
 
+    if (!mounted) return;
+
     if (result.success) {
       // Send notification to user if status is resolved or rejected
       if (statusString == 'resolved' || statusString == 'rejected') {
@@ -163,6 +166,8 @@ class _AdminReportDetailScreenState extends State<AdminReportDetailScreen> {
           adminNotes: notes,
         );
       }
+
+      if (!mounted) return;
 
       setState(() {
         _currentReport = _currentReport.copyWith(

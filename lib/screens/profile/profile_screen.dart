@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../constants/colors.dart';
 import '../../constants/routes.dart';
+import '../../main.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/common/edit_name_dialog.dart';
 import '../../widgets/common/edit_barangay_dialog.dart';
 import '../../widgets/common/edit_phone_dialog.dart';
+import '../../widgets/common/language_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -65,7 +68,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _showLanguagePicker() {
+    final currentLocale = Localizations.localeOf(context);
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => LanguagePicker(
+        currentLocale: currentLocale,
+        onLanguageChanged: (locale) {
+          MainApp.setLocale(context, locale);
+          setState(() {}); // Refresh the screen
+        },
+      ),
+    );
+  }
+
   void _showLogoutDialog() {
+    final l10n = AppLocalizations.of(context)!;
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -74,24 +95,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text(
-            'Logout',
-            style: TextStyle(
+          title: Text(
+            l10n.logout,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
           ),
-          content: const Text(
-            'Are you sure you want to logout from your account?',
-            style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
+          content: Text(
+            l10n.confirmLogoutMsg,
+            style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
+              child: Text(
+                l10n.cancel,
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
@@ -120,9 +141,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Logout',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              child: Text(
+                l10n.logout,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -540,25 +561,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
         barangay: barangay,
       );
 
+      if (!mounted) return;
+
       if (result.success) {
         setState(() {});
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.message ?? 'Barangay updated successfully'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message ?? 'Barangay updated successfully'),
+            backgroundColor: AppColors.success,
+          ),
+        );
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.error ?? 'Failed to update barangay'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.error ?? 'Failed to update barangay'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -621,13 +640,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = _authService.currentUser;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.pureWhite,
       appBar: AppBar(
-        title: const Text(
-          'Profile',
-          style: TextStyle(
+        title: Text(
+          l10n.profile,
+          style: const TextStyle(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
@@ -674,8 +694,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Account Information',
-                    style: TextStyle(
+                    l10n.accountInformation,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
@@ -688,14 +708,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // Account Details
               _buildInfoCard(
-                title: 'Full Name',
+                title: l10n.fullName,
                 value: user?.fullName ?? 'N/A',
                 icon: Icons.person_outline,
                 onTap: _showEditNameDialog,
               ),
 
               _buildInfoCard(
-                title: 'Phone Number',
+                title: l10n.phoneNumber,
                 value: user?.phone ?? 'N/A',
                 icon: Icons.phone_outlined,
                 onTap: _showEditPhoneDialog,
@@ -709,7 +729,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
               _buildInfoCard(
-                title: 'Member Since',
+                title: l10n.memberSince,
                 value: _formatDate(user?.createdAt),
                 icon: Icons.calendar_today_outlined,
               ),
@@ -722,8 +742,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Actions',
-                    style: TextStyle(
+                    l10n.actions,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
@@ -736,7 +756,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // Action Buttons
               _buildActionButton(
-                title: 'Report Status',
+                title: l10n.reportStatus,
                 icon: Icons.assignment_outlined,
                 onTap: () {
                   Navigator.pushNamed(context, AppRoutes.issueStatus);
@@ -744,7 +764,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
               _buildActionButton(
-                title: 'Help & Support',
+                title: l10n.language,
+                icon: Icons.language,
+                onTap: _showLanguagePicker,
+              ),
+
+              _buildActionButton(
+                title: l10n.helpSupport,
                 icon: Icons.help_outline,
                 onTap: () {
                   Navigator.pushNamed(context, AppRoutes.helpSupport);
@@ -752,7 +778,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
               _buildActionButton(
-                title: 'Logout',
+                title: l10n.logout,
                 icon: Icons.logout,
                 onTap: _showLogoutDialog,
                 color: AppColors.error,
@@ -765,8 +791,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
-                  'Green Tagbilaran v1.0.0',
-                  style: TextStyle(
+                  l10n.appVersion,
+                  style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
                   ),

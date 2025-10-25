@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/app_localizations.dart';
 import '../../constants/colors.dart';
 import '../../constants/routes.dart';
 import '../../services/auth_service.dart';
@@ -46,9 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result.success && result.user != null) {
         // Show success message
         if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Welcome back, ${result.user!.firstName}!'),
+              content: Text(l10n.welcomeBackUser(result.user!.firstName)),
               backgroundColor: AppColors.primaryGreen,
             ),
           );
@@ -291,6 +293,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: AppColors.pureWhite,
       body: SafeArea(
@@ -311,9 +315,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Column(
                             children: [
-                              const Text(
-                                'Welcome Back',
-                                style: TextStyle(
+                              Text(
+                                l10n.welcomeBack,
+                                style: const TextStyle(
                                   fontSize: 36,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
@@ -324,9 +328,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               const SizedBox(height: 12),
 
-                              const Text(
-                                'Sign in to continue your journey',
-                                style: TextStyle(
+                              Text(
+                                l10n.signInToContinue,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   color: AppColors.textSecondary,
                                   fontWeight: FontWeight.w400,
@@ -346,9 +350,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Sign In',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.signIn,
+                                  style: const TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.textPrimary,
@@ -360,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 // Phone Number with +63 prefix
                                 _buildTextField(
                                   controller: _phoneController,
-                                  label: 'Phone Number',
+                                  label: l10n.phoneNumber,
                                   icon: Icons.phone_outlined,
                                   keyboardType: TextInputType.phone,
                                   prefixText: '+63 ',
@@ -381,7 +385,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 _buildTextField(
                                   controller: _passwordController,
-                                  label: 'Password',
+                                  label: l10n.password,
                                   icon: Icons.lock_outline,
                                   obscureText: true,
                                   validator: (value) {
@@ -399,8 +403,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 _buildButton(
                                   text: _isLoading
-                                      ? 'Signing In...'
-                                      : 'Sign In',
+                                      ? l10n.signingIn
+                                      : l10n.signIn,
                                   onPressed: _isLoading ? () {} : _handleLogin,
                                 ),
                               ],
@@ -416,9 +420,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
-                                "Don't have an account?",
-                                style: TextStyle(
+                              Text(
+                                l10n.dontHaveAccount,
+                                style: const TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w400,
@@ -426,7 +430,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(width: 8),
                               _buildLinkButton(
-                                text: 'Sign Up',
+                                text: l10n.signUp,
                                 onPressed: () {
                                   Navigator.pushNamed(
                                     context,
@@ -474,19 +478,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                   size: 32,
                                 ),
                                 const SizedBox(height: 12),
-                                const Text(
-                                  'Admin Access',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.adminAccess,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textPrimary,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                const Text(
-                                  'Access administrative controls and management features',
+                                Text(
+                                  l10n.adminAccessDesc,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     color: AppColors.textSecondary,
                                   ),
@@ -510,9 +514,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    child: const Text(
-                                      'Enter Admin Panel',
-                                      style: TextStyle(
+                                    child: Text(
+                                      l10n.enterAdminPanel,
+                                      style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -552,27 +556,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                             ),
-                            child: const Column(
+                            child: Column(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.local_shipping_outlined,
                                   color: AppColors.primaryGreen,
                                   size: 32,
                                 ),
-                                SizedBox(height: 12),
+                                const SizedBox(height: 12),
                                 Text(
-                                  'Truck Driver Access',
-                                  style: TextStyle(
+                                  l10n.truckDriverAccess,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textPrimary,
                                   ),
                                 ),
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
                                 Text(
-                                  'Truck drivers should use their assigned phone number and password to sign in above. Your account is created by the admin.',
+                                  l10n.truckDriverAccessDesc,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     color: AppColors.textSecondary,
                                   ),
