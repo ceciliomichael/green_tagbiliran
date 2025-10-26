@@ -7,8 +7,9 @@ class LanguageService {
   // Supported locales
   static const Locale english = Locale('en');
   static const Locale cebuano = Locale('ceb');
+  static const Locale tagalog = Locale('tl');
   
-  static const List<Locale> supportedLocales = [english, cebuano];
+  static const List<Locale> supportedLocales = [english, cebuano, tagalog];
   
   /// Get the saved locale from SharedPreferences
   static Future<Locale?> getSavedLocale() async {
@@ -53,6 +54,8 @@ class LanguageService {
         return 'English';
       case 'ceb':
         return 'Cebuano';
+      case 'tl':
+        return 'Tagalog';
       default:
         return locale.languageCode.toUpperCase();
     }

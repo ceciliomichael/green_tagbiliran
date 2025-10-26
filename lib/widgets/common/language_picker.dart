@@ -58,7 +58,9 @@ class LanguagePicker extends StatelessWidget {
             final isSelected = locale.languageCode == currentLocale.languageCode;
             final localeName = locale.languageCode == 'en' 
                 ? l10n.english 
-                : l10n.cebuano;
+                : locale.languageCode == 'ceb'
+                  ? l10n.cebuano
+                  : l10n.tagalog;
 
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),

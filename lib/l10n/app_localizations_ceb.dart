@@ -197,6 +197,9 @@ class AppLocalizationsCeb extends AppLocalizations {
   String get cebuano => 'Cebuano';
 
   @override
+  String get tagalog => 'Tagalog';
+
+  @override
   String get adminAccess => 'Admin Access';
 
   @override

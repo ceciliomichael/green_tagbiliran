@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_ceb.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_tl.dart';
 
 // ignore_for_file: type=lint
 
@@ -96,6 +97,7 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('ceb'),
     Locale('en'),
+    Locale('tl'),
   ];
 
   /// No description provided for @appTitle.
@@ -457,6 +459,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cebuano'**
   String get cebuano;
+
+  /// No description provided for @tagalog.
+  ///
+  /// In en, this message translates to:
+  /// **'Tagalog'**
+  String get tagalog;
 
   /// No description provided for @adminAccess.
   ///
@@ -1166,7 +1174,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['ceb', 'en'].contains(locale.languageCode);
+      <String>['ceb', 'en', 'tl'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -1179,6 +1187,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsCeb();
     case 'en':
       return AppLocalizationsEn();
+    case 'tl':
+      return AppLocalizationsTl();
   }
 
   throw FlutterError(
