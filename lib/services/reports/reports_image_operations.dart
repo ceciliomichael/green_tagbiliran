@@ -118,24 +118,6 @@ extension ReportsImageOperations on ReportsService {
     }
   }
 
-  // Helper method to get image type from file path
-  String getImageType(String path) {
-    final extension = path.split('.').last.toLowerCase();
-    switch (extension) {
-      case 'jpg':
-      case 'jpeg':
-        return 'jpeg';
-      case 'png':
-        return 'png';
-      case 'gif':
-        return 'gif';
-      case 'webp':
-        return 'webp';
-      default:
-        return 'jpeg'; // Default to jpeg
-    }
-  }
-
   // Convert base64 to image bytes for display
   List<int> base64ToBytes(String base64String) {
     return base64Decode(base64String);

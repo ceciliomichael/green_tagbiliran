@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/report.dart';
 import '../models/user.dart';
 import '../constants/supabase_config.dart';
+import '../utils/image_utils.dart';
 import 'package:flutter/foundation.dart';
 
 part 'reports/reports_result.dart';

@@ -1,4 +1,24 @@
-enum ReportStatus { pending, inProgress, resolved, rejected }
+enum ReportStatus {
+  pending,
+  inProgress,
+  resolved,
+  rejected;
+
+  /// Check if this status matches a filter string
+  bool matches(String filterString) {
+    final normalized = filterString.toLowerCase().replaceAll(' ', '_');
+    switch (this) {
+      case ReportStatus.pending:
+        return normalized == 'pending';
+      case ReportStatus.inProgress:
+        return normalized == 'in_progress';
+      case ReportStatus.resolved:
+        return normalized == 'resolved';
+      case ReportStatus.rejected:
+        return normalized == 'rejected';
+    }
+  }
+}
 
 class Report {
   final String id;

@@ -193,35 +193,11 @@ extension NotificationAdminOperations on NotificationsService {
     String? adminNotes,
   }) async {
     try {
-      // Create appropriate notification message based on status
-      String title;
-      String message;
-
-      switch (status.toLowerCase()) {
-        case 'resolved':
-          title = 'Report Resolved ✓';
-          message = adminNotes != null && adminNotes.trim().isNotEmpty
-              ? 'Your report has been resolved. Admin notes: $adminNotes'
-              : 'Your report has been resolved. Thank you for your report!';
-          break;
-        case 'rejected':
-          title = 'Report Rejected';
-          message = adminNotes != null && adminNotes.trim().isNotEmpty
-              ? 'Your report has been rejected. Reason: $adminNotes'
-              : 'Your report has been rejected. Please contact admin for more details.';
-          break;
-        case 'in_progress':
-          title = 'Report In Progress';
-          message = adminNotes != null && adminNotes.trim().isNotEmpty
-              ? 'Your report is being processed. Update: $adminNotes'
-              : 'Your report is being processed. We will update you soon.';
-          break;
-        default:
-          title = 'Report Status Updated';
-          message = adminNotes != null && adminNotes.trim().isNotEmpty
-              ? 'Your report status has been updated. Notes: $adminNotes'
-              : 'Your report status has been updated.';
-      }
+      // Get notification content using utility
+      final content =
+          ReportStatusNotifier.getNotificationContent(status, adminNotes);
+      final title = content['title']!;
+      final message = content['message']!;
 
       // Prepare request body for individual user notification
       final requestBody = {

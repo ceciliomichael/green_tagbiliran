@@ -53,25 +53,17 @@ class AnnouncementsService {
       String? imageBase64;
       String? imageType;
       if (imageFile != null) {
-        final imageBytes = await imageFile.readAsBytes();
-        imageBase64 = base64Encode(imageBytes);
-        
-        // Get file type from XFile properties or detect from bytes
-        imageType = ImageUtils.getImageTypeFromFile(imageFile, imageBytes);
-        
-        // Validate image type
-        if (!ImageUtils.isValidImageType(imageType)) {
+        try {
+          final imageDataList =
+              await ImageUtils.processImagesForUpload([imageFile]);
+          if (imageDataList.isNotEmpty) {
+            imageBase64 = imageDataList[0]['image_data'] as String;
+            imageType = imageDataList[0]['image_type'] as String;
+          }
+        } catch (e) {
           return AnnouncementResult(
             success: false,
-            error: 'Only JPG, JPEG, PNG, and GIF images are allowed. Detected: $imageType',
-          );
-        }
-
-        // Validate image size (max 5MB)
-        if (!ImageUtils.isValidImageSize(imageBytes.length)) {
-          return AnnouncementResult(
-            success: false,
-            error: 'Image size must be less than 5MB',
+            error: e.toString().replaceFirst('Exception: ', ''),
           );
         }
       }
@@ -246,25 +238,17 @@ class AnnouncementsService {
       String? imageBase64;
       String? imageType;
       if (imageFile != null && !removeImage) {
-        final imageBytes = await imageFile.readAsBytes();
-        imageBase64 = base64Encode(imageBytes);
-        
-        // Get file type from XFile properties or detect from bytes
-        imageType = ImageUtils.getImageTypeFromFile(imageFile, imageBytes);
-        
-        // Validate image type
-        if (!ImageUtils.isValidImageType(imageType)) {
+        try {
+          final imageDataList =
+              await ImageUtils.processImagesForUpload([imageFile]);
+          if (imageDataList.isNotEmpty) {
+            imageBase64 = imageDataList[0]['image_data'] as String;
+            imageType = imageDataList[0]['image_type'] as String;
+          }
+        } catch (e) {
           return AnnouncementResult(
             success: false,
-            error: 'Only JPG, JPEG, PNG, and GIF images are allowed. Detected: $imageType',
-          );
-        }
-
-        // Validate image size (max 5MB)
-        if (!ImageUtils.isValidImageSize(imageBytes.length)) {
-          return AnnouncementResult(
-            success: false,
-            error: 'Image size must be less than 5MB',
+            error: e.toString().replaceFirst('Exception: ', ''),
           );
         }
       }

@@ -93,19 +93,9 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
     if (_selectedFilter == 'All') {
       _filteredReports = List.from(_allReports);
     } else {
-      String statusFilter = _selectedFilter.toLowerCase().replaceAll(' ', '_');
-      _filteredReports = _allReports.where((report) {
-        switch (statusFilter) {
-          case 'pending':
-            return report.status == ReportStatus.pending;
-          case 'in_progress':
-            return report.status == ReportStatus.inProgress;
-          case 'resolved':
-            return report.status == ReportStatus.resolved;
-          default:
-            return true;
-        }
-      }).toList();
+      _filteredReports = _allReports
+          .where((report) => report.status.matches(_selectedFilter))
+          .toList();
     }
   }
 

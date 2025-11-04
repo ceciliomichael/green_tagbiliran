@@ -88,11 +88,42 @@ class ImageUtils {
   static bool isValidImageSize(int sizeInBytes, {int maxSizeMB = 5}) {
     return sizeInBytes <= maxSizeMB * 1024 * 1024;
   }
+
+  /// Process multiple images for upload - returns list of image data maps
+  /// Consolidates repeated image processing logic from services
+  static Future<List<Map<String, dynamic>>> processImagesForUpload(
+    List<XFile> images,
+  ) async {
+    final List<Map<String, dynamic>> imageDataList = [];
+
+    for (final image in images) {
+      final bytes = await image.readAsBytes();
+      final imageData = base64Encode(bytes);
+      final imageType = getImageTypeFromFile(image, bytes);
+      final fileSize = bytes.length;
+
+      // Validate image type
+      if (!isValidImageType(imageType)) {
+        throw Exception(
+          'Only JPG, JPEG, PNG, and GIF images are allowed. Detected: $imageType',
+        );
+      }
+
+      // Validate image size (max 5MB)
+      if (!isValidImageSize(fileSize)) {
+        throw Exception('Image size must be less than 5MB');
+      }
+
+      imageDataList.add({
+        'image_data': imageData,
+        'image_type': imageType,
+        'file_size': fileSize,
+      });
+    }
+
+    return imageDataList;
+  }
 }
-
-
-
-
 
 
 

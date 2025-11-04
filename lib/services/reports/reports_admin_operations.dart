@@ -120,18 +120,7 @@ extension ReportsAdminOperations on ReportsService {
 
       // Convert images to base64 if provided
       if (images != null && images.isNotEmpty) {
-        for (final image in images) {
-          final bytes = await image.readAsBytes();
-          final imageData = base64Encode(bytes);
-          final imageType = getImageType(image.path);
-          final fileSize = bytes.length;
-
-          imageDataList.add({
-            'image_data': imageData,
-            'image_type': imageType,
-            'file_size': fileSize,
-          });
-        }
+        imageDataList = await ImageUtils.processImagesForUpload(images);
       }
 
       final requestBody = {

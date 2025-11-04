@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/notification.dart';
 import '../constants/supabase_config.dart';
+import '../utils/report_status_notifier.dart';
 import 'notification_overlay_service.dart';
 
 part 'notifications/notification_result.dart';
