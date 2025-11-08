@@ -4,9 +4,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app_localizations.dart';
-import 'app_localizations_ceb.dart';
-import 'app_localizations_en.dart';
-import 'app_localizations_tl.dart';
 
 // ignore_for_file: type=lint
 
