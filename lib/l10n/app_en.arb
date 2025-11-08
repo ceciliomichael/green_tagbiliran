@@ -221,6 +221,63 @@
   "exampleSecureContainers": "Secure containers",
   "exampleContactAuthorities": "Contact local authorities",
   "exampleVisitCenters": "Visit collection centers",
-  "exampleSchedulePickup": "Schedule pickup"
+  "exampleSchedulePickup": "Schedule pickup",
+  "statusNotStarted": "Not Started",
+  "statusHeadingToBarangay": "Heading to Barangay",
+  "statusArrivedAtBarangay": "Arrived at Barangay",
+  "statusCompleted": "Completed",
+  "statusLastUpdated": "Last updated",
+  "statusHeadingToArea": "Truck is heading to {barangay}",
+  "@statusHeadingToArea": {
+    "placeholders": {
+      "barangay": {
+        "type": "String"
+      }
+    }
+  },
+  "statusArrivedInArea": "Truck has arrived in {barangay}",
+  "@statusArrivedInArea": {
+    "placeholders": {
+      "barangay": {
+        "type": "String"
+      }
+    }
+  },
+  "statusCompletedInArea": "Collection completed for {barangay}",
+  "@statusCompletedInArea": {
+    "placeholders": {
+      "barangay": {
+        "type": "String"
+      }
+    }
+  },
+  "statusNoUpdates": "No status updates available",
+  "statusUpdateSuccess": "Status updated successfully",
+  "statusUpdateFailed": "Failed to update status",
+  "statusCurrentStatus": "Current Status",
+  "statusProgress": "Progress",
+  "driverStartCollection": "Start Collection",
+  "driverHeadingTo": "Heading to {barangay}",
+  "@driverHeadingTo": {
+    "placeholders": {
+      "barangay": {
+        "type": "String"
+      }
+    }
+  },
+  "driverArrivedAt": "Arrived at {barangay}",
+  "@driverArrivedAt": {
+    "placeholders": {
+      "barangay": {
+        "type": "String"
+      }
+    }
+  },
+  "driverCompleteCollection": "Complete Collection",
+  "driverStatusHistory": "Status History",
+  "driverNoHistory": "No status history",
+  "trackingStatusTitle": "Truck Status",
+  "trackingNoStatus": "No tracking information available",
+  "trackingStale": "Status may be outdated"
 }
 

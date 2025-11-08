@@ -5,13 +5,16 @@ import '../../constants/routes.dart';
 import '../../constants/map_constants.dart';
 import '../../widgets/track/map_widget.dart';
 import '../../services/auth_service.dart';
+import '../../services/status_tracking_service.dart';
 import '../../models/user.dart';
+import '../../models/driver_status.dart';
 import '../../widgets/ui/truck_driver_header.dart';
 import '../../widgets/ui/truck_driver_location_status_card.dart';
 import '../../widgets/ui/truck_driver_route_status_card.dart';
 import '../../widgets/ui/truck_driver_action_button.dart';
 import '../../widgets/ui/truck_driver_route_setup_dialog.dart';
 import '../../widgets/ui/truck_driver_route_info.dart';
+import '../../widgets/status/driver_status_update_card.dart';
 
 class TruckDriverMainScreen extends StatefulWidget {
   const TruckDriverMainScreen({super.key});
@@ -29,9 +32,14 @@ class _TruckDriverMainScreenState extends State<TruckDriverMainScreen> {
   LatLng? _currentPosition;
 
   final _authService = AuthService();
+  final _statusTrackingService = StatusTrackingService();
   User? _currentUser;
   String _assignedBarangay = 'Loading...';
   String _driverName = 'Driver';
+  DriverStatusRecord? _currentStatus;
+  
+  // Feature flag for new status tracking
+  final bool _useStatusTracking = true;
 
   @override
   void initState() {
@@ -47,9 +55,27 @@ class _TruckDriverMainScreenState extends State<TruckDriverMainScreen> {
         _assignedBarangay = _currentUser!.barangay;
         _driverName = _currentUser!.firstName;
       });
+      
+      // Load current status if using status tracking
+      if (_useStatusTracking) {
+        _loadCurrentStatus();
+      }
     } else {
       if (mounted) {
         Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
+    }
+  }
+
+  Future<void> _loadCurrentStatus() async {
+    if (_currentUser != null) {
+      final status = await _statusTrackingService.getLatestForBarangay(
+        _currentUser!.barangay,
+      );
+      if (mounted) {
+        setState(() {
+          _currentStatus = status;
+        });
       }
     }
   }
@@ -169,45 +195,86 @@ class _TruckDriverMainScreenState extends State<TruckDriverMainScreen> {
               TruckDriverHeader(
                 driverName: _driverName,
                 assignedBarangay: _assignedBarangay,
-                isRouteActive: _isRouteActive,
+                isRouteActive: _useStatusTracking 
+                    ? (_currentStatus?.status != DriverStatus.completed && 
+                       _currentStatus?.status != null)
+                    : _isRouteActive,
                 onLogout: _logout,
               ),
-              TruckDriverLocationStatusCard(
-                isLocationDetected: _isLocationDetected,
-                isDetectingLocation: _isDetectingLocation,
-                startLocation: _startLocation,
-                onRefresh: _detectCurrentLocation,
-              ),
               const SizedBox(height: 16),
-              _buildMapWidget(),
-              TruckDriverRouteStatusCard(
-                isRouteActive: _isRouteActive,
-                endLocation: _endLocation,
-                assignedBarangay: _assignedBarangay,
-              ),
-              const SizedBox(height: 24),
-              if (!_isRouteActive) ...[
-                TruckDriverActionButton(
-                  text: 'Start Route',
-                  icon: Icons.play_arrow,
-                  onPressed: _showRouteSetupDialog,
-                  isDisabled: !_isLocationDetected,
-                ),
-              ] else ...[
-                TruckDriverActionButton(
-                  text: 'End Route',
-                  icon: Icons.stop,
-                  onPressed: _endRoute,
-                  isDestructive: true,
-                ),
-              ],
-              const SizedBox(height: 24),
-              const TruckDriverRouteInfo(),
+              
+              if (_useStatusTracking)
+                _buildStatusTrackingContent()
+              else
+                _buildMapTrackingContent(),
+              
               const SizedBox(height: 40),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildStatusTrackingContent() {
+    if (_currentUser == null) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: AppColors.primaryGreen,
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // Status update card with stepper buttons
+        DriverStatusUpdateCard(
+          driverId: _currentUser!.id,
+          assignedBarangay: _assignedBarangay,
+          currentStatus: _currentStatus,
+          onStatusUpdated: _loadCurrentStatus,
+        ),
+        const SizedBox(height: 24),
+        const TruckDriverRouteInfo(),
+      ],
+    );
+  }
+
+  Widget _buildMapTrackingContent() {
+    return Column(
+      children: [
+        TruckDriverLocationStatusCard(
+          isLocationDetected: _isLocationDetected,
+          isDetectingLocation: _isDetectingLocation,
+          startLocation: _startLocation,
+          onRefresh: _detectCurrentLocation,
+        ),
+        const SizedBox(height: 16),
+        _buildMapWidget(),
+        TruckDriverRouteStatusCard(
+          isRouteActive: _isRouteActive,
+          endLocation: _endLocation,
+          assignedBarangay: _assignedBarangay,
+        ),
+        const SizedBox(height: 24),
+        if (!_isRouteActive) ...[
+          TruckDriverActionButton(
+            text: 'Start Route',
+            icon: Icons.play_arrow,
+            onPressed: _showRouteSetupDialog,
+            isDisabled: !_isLocationDetected,
+          ),
+        ] else ...[
+          TruckDriverActionButton(
+            text: 'End Route',
+            icon: Icons.stop,
+            onPressed: _endRoute,
+            isDestructive: true,
+          ),
+        ],
+        const SizedBox(height: 24),
+        const TruckDriverRouteInfo(),
+      ],
     );
   }
 }

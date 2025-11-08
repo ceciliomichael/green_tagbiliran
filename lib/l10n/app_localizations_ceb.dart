@@ -580,4 +580,80 @@ class AppLocalizationsCeb extends AppLocalizations {
 
   @override
   String get exampleSchedulePickup => 'Mag-iskedyul og pagkuha';
+
+  @override
+  String get statusNotStarted => 'Wala Pa Magsugod';
+
+  @override
+  String get statusHeadingToBarangay => 'Padulong sa Barangay';
+
+  @override
+  String get statusArrivedAtBarangay => 'Miabot na sa Barangay';
+
+  @override
+  String get statusCompleted => 'Nahuman Na';
+
+  @override
+  String get statusLastUpdated => 'Katapusang gi-update';
+
+  @override
+  String statusHeadingToArea(String barangay) {
+    return 'Ang trak padulong sa $barangay';
+  }
+
+  @override
+  String statusArrivedInArea(String barangay) {
+    return 'Ang trak miabot na sa $barangay';
+  }
+
+  @override
+  String statusCompletedInArea(String barangay) {
+    return 'Nahuman na ang koleksyon para sa $barangay';
+  }
+
+  @override
+  String get statusNoUpdates => 'Walay available nga status update';
+
+  @override
+  String get statusUpdateSuccess => 'Malampuson nga na-update ang status';
+
+  @override
+  String get statusUpdateFailed => 'Napakyas ang pag-update sa status';
+
+  @override
+  String get statusCurrentStatus => 'Karon nga Status';
+
+  @override
+  String get statusProgress => 'Progreso';
+
+  @override
+  String get driverStartCollection => 'Sugdi ang Koleksyon';
+
+  @override
+  String driverHeadingTo(String barangay) {
+    return 'Padulong sa $barangay';
+  }
+
+  @override
+  String driverArrivedAt(String barangay) {
+    return 'Miabot sa $barangay';
+  }
+
+  @override
+  String get driverCompleteCollection => 'Kumpleto ang Koleksyon';
+
+  @override
+  String get driverStatusHistory => 'Kasaysayan sa Status';
+
+  @override
+  String get driverNoHistory => 'Walay kasaysayan sa status';
+
+  @override
+  String get trackingStatusTitle => 'Status sa Trak';
+
+  @override
+  String get trackingNoStatus => 'Walay available nga impormasyon sa pagsubay';
+
+  @override
+  String get trackingStale => 'Ang status basin daan na';
 }

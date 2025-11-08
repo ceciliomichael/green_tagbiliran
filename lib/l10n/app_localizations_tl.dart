@@ -582,4 +582,81 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get exampleSchedulePickup => 'Mag-iskedyul ng pagkuha';
+
+  @override
+  String get statusNotStarted => 'Hindi Pa Nagsimula';
+
+  @override
+  String get statusHeadingToBarangay => 'Papunta sa Barangay';
+
+  @override
+  String get statusArrivedAtBarangay => 'Dumating sa Barangay';
+
+  @override
+  String get statusCompleted => 'Nakumpleto';
+
+  @override
+  String get statusLastUpdated => 'Huling na-update';
+
+  @override
+  String statusHeadingToArea(String barangay) {
+    return 'Ang trak ay papunta sa $barangay';
+  }
+
+  @override
+  String statusArrivedInArea(String barangay) {
+    return 'Ang trak ay dumating sa $barangay';
+  }
+
+  @override
+  String statusCompletedInArea(String barangay) {
+    return 'Nakumpleto ang koleksyon para sa $barangay';
+  }
+
+  @override
+  String get statusNoUpdates => 'Walang available na status update';
+
+  @override
+  String get statusUpdateSuccess => 'Matagumpay na na-update ang status';
+
+  @override
+  String get statusUpdateFailed => 'Nabigo ang pag-update ng status';
+
+  @override
+  String get statusCurrentStatus => 'Kasalukuyang Status';
+
+  @override
+  String get statusProgress => 'Progreso';
+
+  @override
+  String get driverStartCollection => 'Simulan ang Koleksyon';
+
+  @override
+  String driverHeadingTo(String barangay) {
+    return 'Papunta sa $barangay';
+  }
+
+  @override
+  String driverArrivedAt(String barangay) {
+    return 'Dumating sa $barangay';
+  }
+
+  @override
+  String get driverCompleteCollection => 'Kumpletuhin ang Koleksyon';
+
+  @override
+  String get driverStatusHistory => 'Kasaysayan ng Status';
+
+  @override
+  String get driverNoHistory => 'Walang kasaysayan ng status';
+
+  @override
+  String get trackingStatusTitle => 'Status ng Trak';
+
+  @override
+  String get trackingNoStatus =>
+      'Walang available na impormasyon sa pagsubaybay';
+
+  @override
+  String get trackingStale => 'Ang status ay maaaring luma na';
 }

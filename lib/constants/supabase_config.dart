@@ -50,6 +50,16 @@ class SupabaseConfig {
   static const String getNotificationStatsEndpoint =
       '$baseApiUrl/get_notification_stats';
 
+  // Driver Status Tracking endpoints
+  static const String updateDriverStatusEndpoint =
+      '$baseApiUrl/update_driver_status';
+  static const String getDriverStatusForBarangayEndpoint =
+      '$baseApiUrl/get_driver_status_for_barangay';
+  static const String getAllDriverStatusesEndpoint =
+      '$baseApiUrl/get_all_driver_statuses';
+  static const String getDriverStatusHistoryEndpoint =
+      '$baseApiUrl/get_driver_status_history';
+
   // Headers for API requests
   static Map<String, String> get headers => {
     'Content-Type': 'application/json',

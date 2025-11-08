@@ -1161,6 +1161,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Schedule pickup'**
   String get exampleSchedulePickup;
+
+  /// No description provided for @statusNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Started'**
+  String get statusNotStarted;
+
+  /// No description provided for @statusHeadingToBarangay.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading to Barangay'**
+  String get statusHeadingToBarangay;
+
+  /// No description provided for @statusArrivedAtBarangay.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrived at Barangay'**
+  String get statusArrivedAtBarangay;
+
+  /// No description provided for @statusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get statusCompleted;
+
+  /// No description provided for @statusLastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated'**
+  String get statusLastUpdated;
+
+  /// No description provided for @statusHeadingToArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck is heading to {barangay}'**
+  String statusHeadingToArea(String barangay);
+
+  /// No description provided for @statusArrivedInArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck has arrived in {barangay}'**
+  String statusArrivedInArea(String barangay);
+
+  /// No description provided for @statusCompletedInArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection completed for {barangay}'**
+  String statusCompletedInArea(String barangay);
+
+  /// No description provided for @statusNoUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'No status updates available'**
+  String get statusNoUpdates;
+
+  /// No description provided for @statusUpdateSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Status updated successfully'**
+  String get statusUpdateSuccess;
+
+  /// No description provided for @statusUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update status'**
+  String get statusUpdateFailed;
+
+  /// No description provided for @statusCurrentStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Status'**
+  String get statusCurrentStatus;
+
+  /// No description provided for @statusProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get statusProgress;
+
+  /// No description provided for @driverStartCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Collection'**
+  String get driverStartCollection;
+
+  /// No description provided for @driverHeadingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading to {barangay}'**
+  String driverHeadingTo(String barangay);
+
+  /// No description provided for @driverArrivedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrived at {barangay}'**
+  String driverArrivedAt(String barangay);
+
+  /// No description provided for @driverCompleteCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Collection'**
+  String get driverCompleteCollection;
+
+  /// No description provided for @driverStatusHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Status History'**
+  String get driverStatusHistory;
+
+  /// No description provided for @driverNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No status history'**
+  String get driverNoHistory;
+
+  /// No description provided for @trackingStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck Status'**
+  String get trackingStatusTitle;
+
+  /// No description provided for @trackingNoStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'No tracking information available'**
+  String get trackingNoStatus;
+
+  /// No description provided for @trackingStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Status may be outdated'**
+  String get trackingStale;
 }
 
 class _AppLocalizationsDelegate

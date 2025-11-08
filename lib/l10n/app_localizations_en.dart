@@ -575,4 +575,80 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exampleSchedulePickup => 'Schedule pickup';
+
+  @override
+  String get statusNotStarted => 'Not Started';
+
+  @override
+  String get statusHeadingToBarangay => 'Heading to Barangay';
+
+  @override
+  String get statusArrivedAtBarangay => 'Arrived at Barangay';
+
+  @override
+  String get statusCompleted => 'Completed';
+
+  @override
+  String get statusLastUpdated => 'Last updated';
+
+  @override
+  String statusHeadingToArea(String barangay) {
+    return 'Truck is heading to $barangay';
+  }
+
+  @override
+  String statusArrivedInArea(String barangay) {
+    return 'Truck has arrived in $barangay';
+  }
+
+  @override
+  String statusCompletedInArea(String barangay) {
+    return 'Collection completed for $barangay';
+  }
+
+  @override
+  String get statusNoUpdates => 'No status updates available';
+
+  @override
+  String get statusUpdateSuccess => 'Status updated successfully';
+
+  @override
+  String get statusUpdateFailed => 'Failed to update status';
+
+  @override
+  String get statusCurrentStatus => 'Current Status';
+
+  @override
+  String get statusProgress => 'Progress';
+
+  @override
+  String get driverStartCollection => 'Start Collection';
+
+  @override
+  String driverHeadingTo(String barangay) {
+    return 'Heading to $barangay';
+  }
+
+  @override
+  String driverArrivedAt(String barangay) {
+    return 'Arrived at $barangay';
+  }
+
+  @override
+  String get driverCompleteCollection => 'Complete Collection';
+
+  @override
+  String get driverStatusHistory => 'Status History';
+
+  @override
+  String get driverNoHistory => 'No status history';
+
+  @override
+  String get trackingStatusTitle => 'Truck Status';
+
+  @override
+  String get trackingNoStatus => 'No tracking information available';
+
+  @override
+  String get trackingStale => 'Status may be outdated';
 }
