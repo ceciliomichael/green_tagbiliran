@@ -6,28 +6,24 @@ import 'package:latlong2/latlong.dart';
 import '../../constants/colors.dart';
 import '../../constants/map_constants.dart';
 import '../../services/track_service.dart';
-import '../../services/driver_location_service.dart';
-import '../../services/auth_service.dart';
 import 'truck_marker.dart';
 
-class MapWidget extends StatefulWidget {
-  const MapWidget({super.key});
+/// Map widget specifically for truck drivers to see their own location
+class DriverMapWidget extends StatefulWidget {
+  const DriverMapWidget({super.key});
 
   @override
-  State<MapWidget> createState() => _MapWidgetState();
+  State<DriverMapWidget> createState() => _DriverMapWidgetState();
 }
 
-class _MapWidgetState extends State<MapWidget> {
+class _DriverMapWidgetState extends State<DriverMapWidget> {
   final MapController _mapController = MapController();
   final TrackService _trackService = TrackService();
-  final AuthService _authService = AuthService();
 
-  LatLng? _userLocation;
-  List<DriverLocation> _activeDrivers = [];
-  String? _userBarangay;
+  LatLng? _driverLocation;
   bool _locationPermissionGranted = false;
   double _currentHeading = 0.0;
-  bool _followUser = true;
+  bool _followDriver = true;
   bool _rotateWithCompass = true;
   StreamSubscription<CompassEvent>? _compassSubscription;
 
@@ -38,13 +34,7 @@ class _MapWidgetState extends State<MapWidget> {
   }
 
   Future<void> _initializeTracking() async {
-    // Get user barangay
-    final user = _authService.currentUser;
-    if (user != null) {
-      _userBarangay = user.barangay;
-    }
-
-    // Start tracking user location
+    // Start tracking driver's own location
     final permissionGranted = await _trackService.startUserTracking();
     if (mounted) {
       setState(() {
@@ -56,16 +46,16 @@ class _MapWidgetState extends State<MapWidget> {
       return;
     }
 
-    // Listen to user location updates with continuous tracking
+    // Listen to driver's location updates and continuously follow
     _trackService.userLocationStream.listen((location) {
       if (mounted) {
         setState(() {
-          _userLocation = location;
+          _driverLocation = location;
         });
-        // Continuously center map on user location as they move (Google Maps style)
-        if (_userLocation != null && _followUser) {
+        // Continuously center map on driver location as they move (Google Maps style)
+        if (_driverLocation != null && _followDriver) {
           _mapController.move(
-            _userLocation!,
+            _driverLocation!,
             _mapController.camera.zoom,
           );
         }
@@ -79,34 +69,17 @@ class _MapWidgetState extends State<MapWidget> {
           _currentHeading = event.heading!;
         });
         // Rotate map based on device orientation
-        if (_userLocation != null && _followUser) {
+        if (_driverLocation != null && _followDriver) {
           _mapController.rotate(-_currentHeading);
         }
       }
     });
-
-    // Start watching drivers if barangay is known
-    if (_userBarangay != null) {
-      _trackService.startWatchingDrivers(_userBarangay!);
-
-      // Listen to driver location updates
-      _trackService.driverLocationsStream.listen((drivers) {
-        if (mounted) {
-          setState(() {
-            _activeDrivers = drivers
-                .where((d) => d.barangay == _userBarangay && d.isActive)
-                .toList();
-          });
-        }
-      });
-    }
   }
 
   @override
   void dispose() {
     _compassSubscription?.cancel();
     _trackService.stopUserTracking();
-    _trackService.stopWatchingDrivers();
     super.dispose();
   }
 
@@ -121,10 +94,10 @@ class _MapWidgetState extends State<MapWidget> {
   }
 
   void _recenterMap() {
-    if (_userLocation != null) {
-      _mapController.move(_userLocation!, 16.0);
+    if (_driverLocation != null) {
+      _mapController.move(_driverLocation!, 16.0);
       setState(() {
-        _followUser = true;
+        _followDriver = true;
       });
     }
   }
@@ -174,7 +147,7 @@ class _MapWidgetState extends State<MapWidget> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Please enable location services to track garbage trucks',
+                  'Please enable location services to see your location on the map',
                   style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -213,7 +186,7 @@ class _MapWidgetState extends State<MapWidget> {
             FlutterMap(
           mapController: _mapController,
           options: MapOptions(
-            initialCenter: _userLocation ?? MapConstants.tagbilaranCenter,
+            initialCenter: _driverLocation ?? MapConstants.tagbilaranCenter,
             initialZoom: 16.0,
             minZoom: MapConstants.minZoom,
             maxZoom: MapConstants.maxZoom,
@@ -221,10 +194,10 @@ class _MapWidgetState extends State<MapWidget> {
               flags: InteractiveFlag.all,
             ),
             onPositionChanged: (position, hasGesture) {
-              // Disable auto-follow if user manually moves the map
-              if (hasGesture && _followUser) {
+              // Disable auto-follow if driver manually moves the map
+              if (hasGesture && _followDriver) {
                 setState(() {
-                  _followUser = false;
+                  _followDriver = false;
                 });
               }
             },
@@ -237,82 +210,21 @@ class _MapWidgetState extends State<MapWidget> {
               maxNativeZoom: 19,
             ),
 
-            // User location marker
-            if (_userLocation != null)
+            // Driver's own location marker (truck stays flat, arrow rotates)
+            if (_driverLocation != null)
               MarkerLayer(
                 markers: [
                   Marker(
-                    width: 50.0,
-                    height: 50.0,
-                    point: _userLocation!,
-                    child: Transform.rotate(
-                      angle: _rotateWithCompass ? (_currentHeading * 3.14159 / 180) : 0,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.pureWhite,
-                            width: 3,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.blue.withValues(alpha: 0.5),
-                              blurRadius: 12,
-                              spreadRadius: 3,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.navigation,
-                          color: AppColors.pureWhite,
-                          size: 30,
-                        ),
-                      ),
+                    width: 60.0,
+                    height: 60.0,
+                    point: _driverLocation!,
+                    child: TruckMarker(
+                      size: 50.0,
+                      heading: _rotateWithCompass ? _currentHeading : 0,
+                      showDirection: true,
                     ),
                   ),
                 ],
-              ),
-
-            // Active driver markers
-            if (_activeDrivers.isNotEmpty)
-              MarkerLayer(
-                markers: _activeDrivers
-                    .map(
-                      (driver) => Marker(
-                        width: 80.0,
-                        height: 80.0,
-                        point: driver.position,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const TruckMarker(size: 40.0),
-                            const SizedBox(height: 2),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryGreen,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                driver.driverName,
-                                style: const TextStyle(
-                                  color: AppColors.pureWhite,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                    .toList(),
               ),
           ],
         ),
@@ -331,7 +243,7 @@ class _MapWidgetState extends State<MapWidget> {
                     onPressed: _recenterMap,
                     child: Icon(
                       Icons.my_location,
-                      color: _followUser ? AppColors.primaryGreen : AppColors.textSecondary,
+                      color: _followDriver ? AppColors.primaryGreen : AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),

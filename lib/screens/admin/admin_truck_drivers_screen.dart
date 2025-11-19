@@ -74,8 +74,6 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
   }
 
   Future<void> _handleCreateDriver(
-    String firstName,
-    String lastName,
     String phone,
     String barangay,
     String? password,
@@ -84,8 +82,6 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
 
     try {
       final result = await _truckDriverService.createTruckDriver(
-        firstName: firstName,
-        lastName: lastName,
         phone: phone,
         password: password ?? _generatePassword(),
         barangay: barangay,
@@ -93,7 +89,7 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
 
       if (mounted) {
         if (result.success) {
-          _showSuccessDialog(firstName, lastName, phone, barangay, password ?? _generatePassword());
+          _showSuccessDialog(phone, barangay, password ?? _generatePassword());
           await _loadTruckDrivers();
         } else {
           _showSnackBar(result.error ?? 'Failed to create driver account', isError: true);
@@ -110,7 +106,8 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
     }
   }
 
-  void _showSuccessDialog(String firstName, String lastName, String phone, String barangay, String password) {
+  void _showSuccessDialog(String phone, String barangay, String password) {
+    final driverName = 'Truck Driver for $barangay';
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -146,7 +143,7 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Account for $firstName $lastName has been successfully created.',
+                  'Account for $driverName has been successfully created.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 14,
@@ -176,7 +173,7 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text('Name: $firstName $lastName'),
+                      Text('Name: $driverName'),
                       Text('Phone: $phone'),
                       Text('Password: $password'),
                       Text('Barangay: $barangay'),
@@ -213,14 +210,12 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
     );
   }
 
-  Future<void> _handleUpdateDriver(TruckDriver driver, String firstName, String lastName, String phone, String barangay, String? _) async {
+  Future<void> _handleUpdateDriver(TruckDriver driver, String phone, String barangay, String? _) async {
     setState(() => _isProcessing = true);
 
     try {
       final result = await _truckDriverService.updateTruckDriver(
         driverId: driver.id,
-        firstName: firstName,
-        lastName: lastName,
         phone: phone,
         barangay: barangay,
       );
@@ -255,9 +250,9 @@ class _AdminTruckDriversScreenState extends State<AdminTruckDriversScreen> {
           child: SingleChildScrollView(
             child: TruckDriverForm(
               driver: driver,
-              onSubmit: (firstName, lastName, phone, barangay, password) {
+              onSubmit: (phone, barangay, password) {
                 Navigator.of(context).pop();
-                _handleUpdateDriver(driver, firstName, lastName, phone, barangay, password);
+                _handleUpdateDriver(driver, phone, barangay, password);
               },
               isLoading: _isProcessing,
             ),

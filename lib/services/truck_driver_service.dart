@@ -23,22 +23,15 @@ class TruckDriverService {
   TruckDriverService._internal();
 
   /// Create truck driver account (admin function)
+  /// Only 1 truck driver per barangay allowed
+  /// Name is auto-generated as "Truck Driver for {barangay}"
   Future<TruckDriverResult> createTruckDriver({
-    required String firstName,
-    required String lastName,
     required String phone,
     required String password,
     required String barangay,
   }) async {
     try {
       // Validate input
-      if (firstName.trim().isEmpty || lastName.trim().isEmpty) {
-        return TruckDriverResult(
-          success: false,
-          error: 'First name and last name are required',
-        );
-      }
-
       if (phone.trim().isEmpty || !phone.startsWith('+63')) {
         return TruckDriverResult(
           success: false,
@@ -55,8 +48,6 @@ class TruckDriverService {
 
       // Prepare request body for truck driver creation
       final requestBody = {
-        'p_first_name': firstName.trim(),
-        'p_last_name': lastName.trim(),
         'p_phone': phone.trim(),
         'p_password': password,
         'p_barangay': barangay,
@@ -141,18 +132,15 @@ class TruckDriverService {
   }
 
   /// Update truck driver
+  /// Name is auto-updated based on barangay
   Future<TruckDriverResult> updateTruckDriver({
     required String driverId,
-    required String firstName,
-    required String lastName,
     required String phone,
     required String barangay,
   }) async {
     try {
       final requestBody = {
         'p_driver_id': driverId,
-        'p_first_name': firstName.trim(),
-        'p_last_name': lastName.trim(),
         'p_phone': phone.trim(),
         'p_barangay': barangay,
       };

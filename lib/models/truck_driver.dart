@@ -15,7 +15,7 @@ class TruckDriver {
     required this.createdAt,
   });
 
-  String get fullName => '$firstName $lastName';
+  String get fullName => '$firstName $lastName'; // Auto-generated as "Truck Driver for {barangay}"
 
   String get truckIdentifier => 'Truck $barangay 1';
 

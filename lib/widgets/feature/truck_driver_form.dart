@@ -6,7 +6,7 @@ import '../ui/barangay_selector_dialog.dart';
 
 class TruckDriverForm extends StatefulWidget {
   final TruckDriver? driver;
-  final Function(String firstName, String lastName, String phone, String barangay, String? password) onSubmit;
+  final Function(String phone, String barangay, String? password) onSubmit;
   final bool isLoading;
 
   const TruckDriverForm({
@@ -22,8 +22,6 @@ class TruckDriverForm extends StatefulWidget {
 
 class _TruckDriverFormState extends State<TruckDriverForm> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _firstNameController;
-  late TextEditingController _lastNameController;
   late TextEditingController _phoneController;
   late TextEditingController _passwordController;
   String? _selectedBarangay;
@@ -47,8 +45,6 @@ class _TruckDriverFormState extends State<TruckDriverForm> {
   @override
   void initState() {
     super.initState();
-    _firstNameController = TextEditingController(text: widget.driver?.firstName ?? '');
-    _lastNameController = TextEditingController(text: widget.driver?.lastName ?? '');
     _phoneController = TextEditingController(
       text: widget.driver?.phone.replaceFirst('+63', '') ?? '',
     );
@@ -58,8 +54,6 @@ class _TruckDriverFormState extends State<TruckDriverForm> {
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -90,8 +84,6 @@ class _TruckDriverFormState extends State<TruckDriverForm> {
         : null;
 
     widget.onSubmit(
-      _firstNameController.text.trim(),
-      _lastNameController.text.trim(),
       '+63${_phoneController.text.trim()}',
       _selectedBarangay!,
       password,
@@ -223,28 +215,34 @@ class _TruckDriverFormState extends State<TruckDriverForm> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildFormField(
-                  controller: _firstNameController,
-                  label: 'First Name',
-                  icon: Icons.person_outline,
-                  validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-                ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primaryGreen.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                width: 1,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildFormField(
-                  controller: _lastNameController,
-                  label: 'Last Name',
-                  icon: Icons.person_outline,
-                  validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: AppColors.primaryGreen, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Driver name will be auto-generated as "Truck Driver for [Barangay]"',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+          const SizedBox(height: 16),
           _buildFormField(
             controller: _phoneController,
             label: 'Phone Number',

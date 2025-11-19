@@ -165,9 +165,11 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Step 9: Create function to create truck driver accounts (API endpoint)
+-- Only 1 truck driver per barangay allowed
+-- Auto-generates name as "Truck Driver for {barangay}"
+-- Drop old function signature first
+DROP FUNCTION IF EXISTS public.create_truck_driver(VARCHAR, VARCHAR, VARCHAR, TEXT, VARCHAR, VARCHAR);
 CREATE OR REPLACE FUNCTION public.create_truck_driver(
-  p_first_name VARCHAR(100),
-  p_last_name VARCHAR(100),
   p_phone VARCHAR(20),
   p_password TEXT,
   p_barangay VARCHAR(50),
@@ -177,7 +179,17 @@ RETURNS JSON AS $$
 DECLARE
   driver_id UUID;
   hashed_password TEXT;
+  generated_first_name VARCHAR(100);
+  generated_last_name VARCHAR(100);
 BEGIN
+  -- Check if a truck driver already exists for this barangay
+  IF EXISTS (SELECT 1 FROM public.users WHERE barangay = p_barangay AND user_role = 'truck_driver') THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'A truck driver already exists for ' || p_barangay || ' barangay. Only one truck driver per barangay is allowed.'
+    );
+  END IF;
+  
   -- Check if phone already exists
   IF EXISTS (SELECT 1 FROM public.users WHERE phone = p_phone) THEN
     RETURN json_build_object(
@@ -194,18 +206,22 @@ BEGIN
     );
   END IF;
   
+  -- Auto-generate name based on barangay
+  generated_first_name := 'Truck Driver for';
+  generated_last_name := p_barangay;
+  
   -- Hash the password using crypt
   hashed_password := crypt(p_password, gen_salt('bf'));
   
   -- Insert new truck driver
   INSERT INTO public.users (first_name, last_name, phone, password_hash, barangay, user_role)
-  VALUES (p_first_name, p_last_name, p_phone, hashed_password, p_barangay, p_user_role)
+  VALUES (generated_first_name, generated_last_name, p_phone, hashed_password, p_barangay, p_user_role)
   RETURNING id INTO driver_id;
   
   RETURN json_build_object(
     'success', true,
     'driver_id', driver_id,
-    'message', 'Truck driver account created successfully'
+    'message', 'Truck driver account created successfully for ' || p_barangay
   );
   
 EXCEPTION WHEN OTHERS THEN
@@ -223,7 +239,7 @@ GRANT EXECUTE ON FUNCTION public.create_truck_driver TO anon;
 -- Step 11: Add documentation comments
 COMMENT ON COLUMN public.users.user_role IS 'User role: user, admin, or truck_driver';
 COMMENT ON FUNCTION public.create_admin_account IS 'Create a new admin account';
-COMMENT ON FUNCTION public.create_truck_driver IS 'Create a new truck driver account (API endpoint)';
+COMMENT ON FUNCTION public.create_truck_driver IS 'Create a new truck driver account (API endpoint) - Only 1 driver per barangay allowed, auto-generates name';
 
 -- Step 12: Function to get all truck drivers
 CREATE OR REPLACE FUNCTION public.get_all_truck_drivers()
@@ -259,20 +275,32 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Step 13: Function to update truck driver information
+-- Auto-updates name when barangay changes
+-- Drop old function signature first
+DROP FUNCTION IF EXISTS public.update_truck_driver(UUID, VARCHAR, VARCHAR, VARCHAR, VARCHAR);
 CREATE OR REPLACE FUNCTION public.update_truck_driver(
   p_driver_id UUID,
-  p_first_name VARCHAR(100),
-  p_last_name VARCHAR(100),
   p_phone VARCHAR(20),
   p_barangay VARCHAR(50)
 )
 RETURNS JSON AS $$
+DECLARE
+  generated_first_name VARCHAR(100);
+  generated_last_name VARCHAR(100);
 BEGIN
   -- Check if driver exists
   IF NOT EXISTS (SELECT 1 FROM public.users WHERE id = p_driver_id AND user_role = 'truck_driver') THEN
     RETURN json_build_object(
       'success', false,
       'error', 'Truck driver not found'
+    );
+  END IF;
+  
+  -- Check if another truck driver already exists for the new barangay
+  IF EXISTS (SELECT 1 FROM public.users WHERE barangay = p_barangay AND user_role = 'truck_driver' AND id != p_driver_id) THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'A truck driver already exists for ' || p_barangay || ' barangay'
     );
   END IF;
   
@@ -284,11 +312,15 @@ BEGIN
     );
   END IF;
   
+  -- Auto-generate name based on barangay
+  generated_first_name := 'Truck Driver for';
+  generated_last_name := p_barangay;
+  
   -- Update truck driver
   UPDATE public.users 
   SET 
-    first_name = p_first_name,
-    last_name = p_last_name,
+    first_name = generated_first_name,
+    last_name = generated_last_name,
     phone = p_phone,
     barangay = p_barangay,
     updated_at = now()
@@ -369,13 +401,21 @@ BEGIN
     );
   END IF;
   
-  -- Delete truck driver
+  -- Delete driver location data first (if table exists)
+  DELETE FROM public.driver_locations 
+  WHERE driver_id = p_driver_id::text;
+  
+  -- Delete driver status updates (if table exists)
+  DELETE FROM public.driver_status_updates 
+  WHERE driver_id = p_driver_id;
+  
+  -- Delete truck driver from users table
   DELETE FROM public.users 
   WHERE id = p_driver_id AND user_role = 'truck_driver';
   
   RETURN json_build_object(
     'success', true,
-    'message', 'Truck driver deleted successfully'
+    'message', 'Truck driver and all associated location data deleted successfully'
   );
   
 EXCEPTION WHEN OTHERS THEN

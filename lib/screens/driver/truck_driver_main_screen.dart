@@ -1,11 +1,15 @@
+import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../../constants/colors.dart';
 import '../../constants/routes.dart';
 import '../../constants/map_constants.dart';
-import '../../widgets/track/map_widget.dart';
+import '../../widgets/track/driver_map_widget.dart';
 import '../../services/auth_service.dart';
 import '../../services/status_tracking_service.dart';
+import '../../services/track_service.dart';
+import '../../services/gps_location_service.dart';
 import '../../models/user.dart';
 import '../../models/driver_status.dart';
 import '../../widgets/ui/truck_driver_header.dart';
@@ -33,13 +37,16 @@ class _TruckDriverMainScreenState extends State<TruckDriverMainScreen> {
 
   final _authService = AuthService();
   final _statusTrackingService = StatusTrackingService();
+  final _trackService = TrackService();
+  final _gpsService = GpsLocationService();
   User? _currentUser;
   String _assignedBarangay = 'Loading...';
   String _driverName = 'Driver';
   DriverStatusRecord? _currentStatus;
+  Timer? _locationUpdateTimer;
   
-  // Feature flag for new status tracking
-  final bool _useStatusTracking = true;
+  // Feature flag for new status tracking (disabled - using GPS tracking)
+  final bool _useStatusTracking = false;
 
   @override
   void initState() {
@@ -87,12 +94,40 @@ class _TruckDriverMainScreenState extends State<TruckDriverMainScreen> {
     }
   }
 
-  void _detectCurrentLocation() {
+  Future<void> _detectCurrentLocation() async {
     setState(() {
       _isDetectingLocation = true;
     });
 
-    Future.delayed(const Duration(seconds: 2), () {
+    // Start GPS tracking to get real location
+    final started = await _gpsService.startTracking();
+    
+    if (started) {
+      // Listen to location updates
+      _gpsService.locationStream.listen((location) {
+        if (mounted) {
+          setState(() {
+            _currentPosition = location;
+            _startLocation =
+                'Lat: ${location.latitude.toStringAsFixed(6)}, Lng: ${location.longitude.toStringAsFixed(6)}';
+          });
+        }
+      });
+
+      // Wait for initial location
+      await Future.delayed(const Duration(seconds: 2));
+      
+      if (mounted) {
+        setState(() {
+          _isDetectingLocation = false;
+          _isLocationDetected = _currentPosition != null;
+        });
+      }
+      
+      // Stop GPS initially (will restart when route starts)
+      _gpsService.stopTracking();
+    } else {
+      // Fallback to center if GPS fails
       if (mounted) {
         setState(() {
           _isDetectingLocation = false;
@@ -102,7 +137,7 @@ class _TruckDriverMainScreenState extends State<TruckDriverMainScreen> {
               'Lat: ${_currentPosition!.latitude.toStringAsFixed(6)}, Lng: ${_currentPosition!.longitude.toStringAsFixed(6)}';
         });
       }
-    });
+    }
   }
 
   Widget _buildMapWidget() {
@@ -122,7 +157,7 @@ class _TruckDriverMainScreenState extends State<TruckDriverMainScreen> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: const MapWidget(),
+        child: const DriverMapWidget(),
       ),
     );
   }
@@ -139,49 +174,139 @@ class _TruckDriverMainScreenState extends State<TruckDriverMainScreen> {
     );
   }
 
-  void _startRoute(String endLocation) {
+  Future<void> _startRoute(String endLocation) async {
     setState(() {
       _isRouteActive = true;
       _endLocation = endLocation;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text('Route started to $endLocation, $_assignedBarangay'),
-            ),
-          ],
+    // Start GPS tracking
+    await _gpsService.startTracking();
+    
+    // Listen to location updates and update display in real-time
+    _gpsService.locationStream.listen((location) {
+      if (mounted) {
+        setState(() {
+          _currentPosition = location;
+          // Update the displayed location in real-time
+          _startLocation =
+              'Lat: ${location.latitude.toStringAsFixed(6)}, Lng: ${location.longitude.toStringAsFixed(6)}';
+        });
+      }
+    });
+
+    // Send location updates to database every 5 seconds
+    if (_currentUser != null) {
+      // Send immediate update first
+      if (_currentPosition != null) {
+        developer.log('🚀 Sending initial driver location to database...', name: 'DriverLocation');
+        _trackService.updateDriverLocation(
+          driverId: _currentUser!.id,
+          driverName: '${_currentUser!.firstName} ${_currentUser!.lastName}',
+          barangay: _currentUser!.barangay,
+          position: _currentPosition!,
+          isActive: true,
+        ).then((success) {
+          if (success) {
+            developer.log('✅ Initial location sent successfully', name: 'DriverLocation');
+          } else {
+            developer.log('❌ Failed to send initial location', name: 'DriverLocation');
+          }
+        });
+      }
+      
+      // Set up periodic updates every 5 seconds (even if not moving)
+      _locationUpdateTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+        if (_isRouteActive && _currentUser != null) {
+          // Get latest position
+          final position = _gpsService.currentLocation ?? _currentPosition;
+          
+          if (position != null) {
+            developer.log('📡 Sending periodic location update...', name: 'DriverLocation');
+            final success = await _trackService.updateDriverLocation(
+              driverId: _currentUser!.id,
+              driverName: '${_currentUser!.firstName} ${_currentUser!.lastName}',
+              barangay: _currentUser!.barangay,
+              position: position,
+              isActive: true,
+            );
+            
+            if (!success) {
+              developer.log('❌ Failed to update driver location', name: 'DriverLocation');
+            }
+          } else {
+            developer.log('⚠️ No GPS position available yet', name: 'DriverLocation');
+          }
+        }
+      });
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Route started to $endLocation, $_assignedBarangay'),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.primaryGreen,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        backgroundColor: AppColors.primaryGreen,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+      );
+    }
   }
 
-  void _endRoute() {
+  Future<void> _endRoute() async {
+    // Stop GPS tracking
+    _gpsService.stopTracking();
+    
+    // Cancel location update timer
+    _locationUpdateTimer?.cancel();
+    _locationUpdateTimer = null;
+    
+    // Send final update marking driver as inactive
+    if (_currentUser != null && _currentPosition != null) {
+      await _trackService.updateDriverLocation(
+        driverId: _currentUser!.id,
+        driverName: '${_currentUser!.firstName} ${_currentUser!.lastName}',
+        barangay: _currentUser!.barangay,
+        position: _currentPosition!,
+        isActive: false,
+      );
+    }
+
     setState(() {
       _isRouteActive = false;
       _endLocation = null;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 8),
-            Text('Route completed successfully'),
-          ],
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Route completed successfully'),
+            ],
+          ),
+          backgroundColor: AppColors.primaryGreen,
+          behavior: SnackBarBehavior.floating,
         ),
-        backgroundColor: AppColors.primaryGreen,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _locationUpdateTimer?.cancel();
+    _gpsService.stopTracking();
+    super.dispose();
   }
 
   @override

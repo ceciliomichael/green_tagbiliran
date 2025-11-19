@@ -1,100 +1,95 @@
-import 'dart:async';
-import 'dart:math';
 import 'package:latlong2/latlong.dart';
-import '../constants/map_constants.dart';
+import 'gps_location_service.dart';
+import 'driver_location_service.dart';
 
+/// Service for tracking user and driver locations in real-time
 class TrackService {
   static final TrackService _instance = TrackService._internal();
   factory TrackService() => _instance;
   TrackService._internal();
-  
-  // Stream controller for truck position updates
-  final StreamController<LatLng> _truckPositionController = StreamController<LatLng>.broadcast();
-  Stream<LatLng> get truckPositionStream => _truckPositionController.stream;
-  
-  // Stream controller for route progress updates
-  final StreamController<List<LatLng>> _routeProgressController = StreamController<List<LatLng>>.broadcast();
-  Stream<List<LatLng>> get routeProgressStream => _routeProgressController.stream;
-  
-  // Current truck position
-  LatLng _currentPosition = MapConstants.currentTruckPosition;
-  LatLng get currentPosition => _currentPosition;
-  
-  // Route simulation variables
-  Timer? _simulationTimer;
-  int _currentRouteIndex = 0;
-  final List<LatLng> _completedRoute = [];
-  
-  // Initialize tracking service
-  void startTracking() {
-    _simulateMovement();
+
+  final GpsLocationService _gpsService = GpsLocationService();
+  final DriverLocationService _driverService = DriverLocationService();
+
+  // Get user location stream
+  Stream<LatLng> get userLocationStream => _gpsService.locationStream;
+
+  // Get driver locations stream
+  Stream<List<DriverLocation>> get driverLocationsStream =>
+      _driverService.driversStream;
+
+  // Get current user location
+  LatLng? get currentUserLocation => _gpsService.currentLocation;
+
+  /// Start tracking user location
+  Future<bool> startUserTracking() async {
+    return await _gpsService.startTracking();
   }
-  
-  void stopTracking() {
-    _simulationTimer?.cancel();
+
+  /// Stop tracking user location
+  void stopUserTracking() {
+    _gpsService.stopTracking();
   }
-  
-  // Simulate truck movement along the route
-  void _simulateMovement() {
-    _simulationTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (_currentRouteIndex < MapConstants.garbageCollectionRoute.length) {
-        // Move to next point in route
-        _currentPosition = MapConstants.garbageCollectionRoute[_currentRouteIndex];
-        _completedRoute.add(_currentPosition);
-        
-        // Add some randomness to make movement more realistic
-        final random = Random();
-        final latOffset = (random.nextDouble() - 0.5) * 0.001; // Small random offset
-        final lngOffset = (random.nextDouble() - 0.5) * 0.001;
-        
-        _currentPosition = LatLng(
-          _currentPosition.latitude + latOffset,
-          _currentPosition.longitude + lngOffset,
-        );
-        
-        // Emit updates
-        _truckPositionController.add(_currentPosition);
-        _routeProgressController.add(List.from(_completedRoute));
-        
-        _currentRouteIndex++;
-      } else {
-        // Route completed, restart from beginning
-        _currentRouteIndex = 0;
-        _completedRoute.clear();
-      }
-    });
+
+  /// Start watching drivers for a specific barangay
+  void startWatchingDrivers(String barangay) {
+    _driverService.startWatchingBarangay(barangay);
   }
-  
-  // Get estimated time to reach user's location
-  Duration getEstimatedArrivalTime(LatLng userLocation) {
-    final Distance distance = Distance();
-    final distanceInMeters = distance.as(LengthUnit.Meter, _currentPosition, userLocation);
-    
-    // Assume average speed of 20 km/h for garbage truck
-    final averageSpeedKmh = 20.0;
-    final averageSpeedMs = averageSpeedKmh * 1000 / 3600; // Convert to m/s
-    
-    final timeInSeconds = distanceInMeters / averageSpeedMs;
-    return Duration(seconds: timeInSeconds.round());
+
+  /// Stop watching drivers
+  void stopWatchingDrivers() {
+    _driverService.stopWatching();
   }
-  
-  // Get remaining route points
-  List<LatLng> getRemainingRoute() {
-    if (_currentRouteIndex >= MapConstants.garbageCollectionRoute.length) {
-      return [];
-    }
-    return MapConstants.garbageCollectionRoute.sublist(_currentRouteIndex);
+
+  /// Update driver location (for driver app)
+  Future<bool> updateDriverLocation({
+    required String driverId,
+    required String driverName,
+    required String barangay,
+    required LatLng position,
+    required bool isActive,
+  }) async {
+    return await _driverService.updateDriverLocation(
+      driverId: driverId,
+      driverName: driverName,
+      barangay: barangay,
+      position: position,
+      isActive: isActive,
+    );
   }
-  
-  // Get completed route points
-  List<LatLng> getCompletedRoute() {
-    return List.from(_completedRoute);
+
+  /// Get estimated arrival time from driver to user
+  Duration getEstimatedArrivalTime(LatLng driverLocation, LatLng userLocation) {
+    return _gpsService.getEstimatedArrivalTime(
+      driverLocation,
+      userLocation,
+      averageSpeedKmh: 20.0,
+    );
   }
-  
-  // Clean up resources
+
+  /// Get distance between two points in meters
+  double getDistance(LatLng from, LatLng to) {
+    return _gpsService.getDistance(from, to);
+  }
+
+  /// Get active drivers for barangay
+  List<DriverLocation> getActiveDriversForBarangay(String barangay) {
+    return _driverService.getActiveDriversForBarangay(barangay);
+  }
+
+  /// Mark driver as inactive (when device is turned off)
+  Future<bool> markDriverInactive(String driverId) async {
+    return await _driverService.markDriverInactive(driverId);
+  }
+
+  /// Remove driver location completely (when device is disconnected)
+  Future<bool> removeDriverLocation(String driverId) async {
+    return await _driverService.removeDriverLocation(driverId);
+  }
+
+  /// Clean up resources
   void dispose() {
-    _simulationTimer?.cancel();
-    _truckPositionController.close();
-    _routeProgressController.close();
+    _gpsService.dispose();
+    _driverService.dispose();
   }
 }
