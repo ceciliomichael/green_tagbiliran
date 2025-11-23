@@ -401,13 +401,23 @@ BEGIN
     );
   END IF;
   
-  -- Delete driver location data first (if table exists)
-  DELETE FROM public.driver_locations 
-  WHERE driver_id = p_driver_id::text;
+  -- Delete driver location data (if table exists)
+  BEGIN
+    DELETE FROM public.driver_locations 
+    WHERE driver_id = p_driver_id::text;
+  EXCEPTION WHEN undefined_table THEN
+    -- Table doesn't exist, skip
+    NULL;
+  END;
   
   -- Delete driver status updates (if table exists)
-  DELETE FROM public.driver_status_updates 
-  WHERE driver_id = p_driver_id;
+  BEGIN
+    DELETE FROM public.driver_status_updates 
+    WHERE driver_id = p_driver_id;
+  EXCEPTION WHEN undefined_table THEN
+    -- Table doesn't exist, skip
+    NULL;
+  END;
   
   -- Delete truck driver from users table
   DELETE FROM public.users 
@@ -415,7 +425,7 @@ BEGIN
   
   RETURN json_build_object(
     'success', true,
-    'message', 'Truck driver and all associated location data deleted successfully'
+    'message', 'Truck driver deleted successfully'
   );
   
 EXCEPTION WHEN OTHERS THEN

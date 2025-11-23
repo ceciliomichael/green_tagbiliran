@@ -130,9 +130,10 @@ BEGIN
         END LOOP;
     ELSIF p_target_type = 'barangay' THEN
         -- Send to users in specific barangay
+        -- Strip "Barangay " prefix if present for matching
         FOR v_user_record IN 
             SELECT id FROM public.users 
-            WHERE user_role = 'user' AND barangay = TRIM(p_target_barangay)
+            WHERE user_role = 'user' AND barangay = TRIM(REGEXP_REPLACE(p_target_barangay, '^Barangay\s+', '', 'i'))
         LOOP
             INSERT INTO public.notification_recipients (notification_id, user_id)
             VALUES (v_notification_id, v_user_record.id);
