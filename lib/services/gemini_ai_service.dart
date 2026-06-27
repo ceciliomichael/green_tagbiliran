@@ -15,7 +15,6 @@ class GeminiAiService {
 
   /// Initialize the service with environment variables
   Future<void> initialize() async {
-    await dotenv.load(fileName: '.env');
 
     _apiUrl = dotenv.env['GOOGLE_API_URL'] ?? '';
     _apiKey = dotenv.env['GOOGLE_API_KEY'] ?? '';

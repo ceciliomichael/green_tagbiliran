@@ -89,9 +89,9 @@ class UserStatisticsService {
   UserStatisticsService._internal();
 
   // API endpoints
-  static const String _getUserStatisticsEndpoint = '${SupabaseConfig.baseApiUrl}/get_user_statistics';
-  static const String _getUserRegistrationTrendsEndpoint = '${SupabaseConfig.baseApiUrl}/get_user_registration_trends';
-  static const String _getUserActivityByBarangayEndpoint = '${SupabaseConfig.baseApiUrl}/get_user_activity_by_barangay';
+  static String get _getUserStatisticsEndpoint => '${SupabaseConfig.baseApiUrl}/get_user_statistics';
+  static String get _getUserRegistrationTrendsEndpoint => '${SupabaseConfig.baseApiUrl}/get_user_registration_trends';
+  static String get _getUserActivityByBarangayEndpoint => '${SupabaseConfig.baseApiUrl}/get_user_activity_by_barangay';
 
   // Get comprehensive user statistics
   Future<UserStatisticsResult> getUserStatistics(String adminId) async {

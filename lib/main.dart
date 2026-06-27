@@ -29,8 +29,13 @@ import 'constants/colors.dart';
 import 'services/auth_service.dart';
 import 'services/language_service.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: '.env');
 
   // Initialize authentication service
   await AuthService().initialize();
